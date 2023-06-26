@@ -5,8 +5,7 @@ description = "宮崎大学片山徹郎研究室チームKatLabが作成するET
 authors = ["KatLab-MiyazakiUniv"]
 readme = "README.md"
 packages = [
-    {include = "etrobocon2023_camera_system"},
-    {include = "src"}
+    {include = "etrobocon2023_camera_system"}
 ]
 
 [tool.poetry.dependencies]
