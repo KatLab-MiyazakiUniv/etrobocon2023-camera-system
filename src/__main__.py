@@ -16,5 +16,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     cs = camera_system.CameraSystem()
-    result = cs.start()
-    print("result: ", result)
+    cs.start()
