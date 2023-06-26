@@ -1,1 +1,23 @@
+[tool.poetry]
+name = "etrobocon2023-camera-system"
+version = "0.1.0"
+description = "宮崎大学片山徹郎研究室チームKatLabが作成するETロボコン2022アドバンストクラスのカメラシステム用のプログラムです."
+authors = ["KatLab-MiyazakiUniv"]
+readme = "README.md"
+packages = [
+    {include = "etrobocon2023_camera_system"},
+    {include = "src"}
+]
 
+[tool.poetry.dependencies]
+python = "^3.10"
+autopep8 = "^2.0.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+autopep8 = "^2.0.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
