@@ -4,13 +4,12 @@ version = "0.1.0"
 description = "宮崎大学片山徹郎研究室チームKatLabが作成するETロボコン2022アドバンストクラスのカメラシステム用のプログラムです."
 authors = ["KatLab-MiyazakiUniv"]
 readme = "README.md"
-packages = [
-    {include = "etrobocon2023_camera_system"}
-]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 autopep8 = "^2.0.2"
+pycodestyle = "^2.10.0"
+pydocstyle = "^6.3.0"
 
 
 [tool.poetry.group.dev.dependencies]
