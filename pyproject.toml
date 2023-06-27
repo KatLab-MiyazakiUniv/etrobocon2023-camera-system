@@ -10,6 +10,7 @@ python = "^3.10"
 autopep8 = "^2.0.2"
 pycodestyle = "^2.10.0"
 pydocstyle = "^6.3.0"
+coverage = "^7.2.7"
 
 
 [tool.poetry.group.dev.dependencies]
