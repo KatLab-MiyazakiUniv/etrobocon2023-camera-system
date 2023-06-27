@@ -17,10 +17,7 @@ jobs:
       - run: poetry install
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry install --no-root
+        run: run: poetry install --no-interaction --no-root
 
       - name: Run tests
         run: poetry run pytest
@@ -37,7 +34,7 @@ jobs:
           poetry run python -m coverage report >> ${GITHUB_STEP_SUMMARY}
           echo '```'                           >> ${GITHUB_STEP_SUMMARY}
 
-          poetry run python -m coverage xml
+          poetry run coverage report
 
       # カバレッジレポートをCodecovにアップロードする
       - name: Upload coverage to Codecov
