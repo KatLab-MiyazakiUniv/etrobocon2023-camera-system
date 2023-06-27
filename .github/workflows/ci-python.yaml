@@ -25,11 +25,11 @@ jobs:
       - name: Run tests
         run: poetry run pytest
 
-      # カバレッジレポートを生成してジョブのサマリーに追加する
+      # カバレッジレポート(テストの網羅率)を生成してジョブのサマリーに追加する
       - name: Generage coverage report
         id: generate_coverage_report
         run: |
-          poetry run python -m coverage run --source=src/ -m pytest discover
+          poetry run python -m coverage run --source=src/ -m pytest tests
           
           # Job Summaries にカバレッジの概要を設定する
           echo '## Coverage'                   >> ${GITHUB_STEP_SUMMARY}
