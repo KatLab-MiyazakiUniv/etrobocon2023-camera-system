@@ -22,32 +22,32 @@ jobs:
       - name: Run tests
         run: poetry run pytest
 
-      # カバレッジレポート(テストの網羅率)を生成してジョブのサマリーに追加する
-      - name: Generage coverage report
-        id: generate_coverage_report
-        run: |
-          poetry run coverage run -m pytest
+      # # カバレッジレポート(テストの網羅率)を生成してジョブのサマリーに追加する
+      # - name: Generage coverage report
+      #   id: generate_coverage_report
+      #   run: |
+      #     poetry run coverage run -m pytest
           
-          # Job Summaries にカバレッジの概要を設定する
-          echo '## Coverage'                   >> ${GITHUB_STEP_SUMMARY}
-          echo '```'                           >> ${GITHUB_STEP_SUMMARY}
-          poetry run python -m coverage report >> ${GITHUB_STEP_SUMMARY}
-          echo '```'                           >> ${GITHUB_STEP_SUMMARY}
+      #     # Job Summaries にカバレッジの概要を設定する
+      #     echo '## Coverage'                   >> ${GITHUB_STEP_SUMMARY}
+      #     echo '```'                           >> ${GITHUB_STEP_SUMMARY}
+      #     poetry run python -m coverage report >> ${GITHUB_STEP_SUMMARY}
+      #     echo '```'                           >> ${GITHUB_STEP_SUMMARY}
 
-          poetry run coverage report
+      #     poetry run coverage report
 
-      # カバレッジレポートをCodecovにアップロードする
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          fail_ci_if_error: true # アップロードにエラーがあった場合はCIが失敗
+      # # カバレッジレポートをCodecovにアップロードする
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     fail_ci_if_error: true # アップロードにエラーがあった場合はCIが失敗
 
-      # ジョブのサマリーにCodecovのリンクを設定する
-      - name: Set Codecov link to Job Summaries
-        run: |
-          echo "## Coverage report on Codecov" >> ${GITHUB_STEP_SUMMARY}
-          echo "以下のリンクから詳細を確認できます。  " >> ${GITHUB_STEP_SUMMARY}
-          echo "https://codecov.io/gh/${GITHUB_REPOSITORY}/commit/$(git rev-parse HEAD)" >> ${GITHUB_STEP_SUMMARY}
+      # # ジョブのサマリーにCodecovのリンクを設定する
+      # - name: Set Codecov link to Job Summaries
+      #   run: |
+      #     echo "## Coverage report on Codecov" >> ${GITHUB_STEP_SUMMARY}
+      #     echo "以下のリンクから詳細を確認できます。  " >> ${GITHUB_STEP_SUMMARY}
+      #     echo "https://codecov.io/gh/${GITHUB_REPOSITORY}/commit/$(git rev-parse HEAD)" >> ${GITHUB_STEP_SUMMARY}
 
       # PythonのコードをPEP8のガイドラインに基づいてチェックするためのツール
       - name: Format check
