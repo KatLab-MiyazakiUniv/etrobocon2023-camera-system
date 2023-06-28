@@ -36,13 +36,6 @@ jobs:
 
           poetry run coverage report
 
-      # カバレッジレポートをCodecovにアップロードする
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          fail_ci_if_error: true # アップロードにエラーがあった場合はCIが失敗
-
-
       # PythonのコードをPEP8のガイドラインに基づいてチェックするためのツール
       - name: Format check
         run: |
