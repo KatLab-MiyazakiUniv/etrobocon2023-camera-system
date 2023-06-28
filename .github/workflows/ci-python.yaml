@@ -22,19 +22,19 @@ jobs:
       - name: Run tests
         run: poetry run pytest
 
-      # # カバレッジレポート(テストの網羅率)を生成してジョブのサマリーに追加する
-      # - name: Generage coverage report
-      #   id: generate_coverage_report
-      #   run: |
-      #     poetry run coverage run -m pytest
+      # カバレッジレポート(テストの網羅率)を生成してジョブのサマリーに追加する
+      - name: Generage coverage report
+        id: generate_coverage_report
+        run: |
+          poetry run coverage run -m pytest
           
-      #     # Job Summaries にカバレッジの概要を設定する
-      #     echo '## Coverage'                   >> ${GITHUB_STEP_SUMMARY}
-      #     echo '```'                           >> ${GITHUB_STEP_SUMMARY}
-      #     poetry run python -m coverage report >> ${GITHUB_STEP_SUMMARY}
-      #     echo '```'                           >> ${GITHUB_STEP_SUMMARY}
+          # Job Summaries にカバレッジの概要を設定する
+          echo '## Coverage'                   >> ${GITHUB_STEP_SUMMARY}
+          echo '```'                           >> ${GITHUB_STEP_SUMMARY}
+          poetry run python -m coverage report >> ${GITHUB_STEP_SUMMARY}
+          echo '```'                           >> ${GITHUB_STEP_SUMMARY}
 
-      #     poetry run coverage report
+          poetry run coverage report
 
       # # カバレッジレポートをCodecovにアップロードする
       # - name: Upload coverage to Codecov
