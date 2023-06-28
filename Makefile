@@ -20,3 +20,8 @@ format:
 coverage:
 	poetry run coverage run -m pytest
 	poetry run coverage report
+
+push:
+	git add .
+	git commit -m "実験"
+	git push origin ticket-6 
