@@ -1,6 +1,4 @@
-"""
-このモジュールは計算を行うためのクラスを提供します。
-"""
+"""このモジュールは計算を行うためのクラスを提供します。"""
 
 
 class Calculate:
@@ -12,7 +10,7 @@ class Calculate:
 
     def add(self, a, b):
         """足し算を行う関数.
-        aとbを足し算する
-        a, b: int
+
+        ab: int
         """
         return a + b
