@@ -42,12 +42,6 @@ jobs:
         with:
           fail_ci_if_error: true # アップロードにエラーがあった場合はCIが失敗
 
-      # # ジョブのサマリーにCodecovのリンクを設定する
-      # - name: Set Codecov link to Job Summaries
-      #   run: |
-      #     echo "## Coverage report on Codecov" >> ${GITHUB_STEP_SUMMARY}
-      #     echo "以下のリンクから詳細を確認できます。  " >> ${GITHUB_STEP_SUMMARY}
-      #     echo "https://codecov.io/gh/${GITHUB_REPOSITORY}/commit/$(git rev-parse HEAD)" >> ${GITHUB_STEP_SUMMARY}
 
       # PythonのコードをPEP8のガイドラインに基づいてチェックするためのツール
       - name: Format check
