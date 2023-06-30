@@ -1,8 +1,9 @@
 """カメラシステムモジュール.
 
 カメラシステムにおいて、一番最初に呼ばれるクラスを定義している
-@author: kawanoichi
+@author: kawanoichi aridome222
 """
+from client import Client
 
 
 class CameraSystem:
@@ -15,3 +16,5 @@ class CameraSystem:
     def start(self) -> None:
         """ゲーム攻略を計画する."""
         pass
+
+    Client()
