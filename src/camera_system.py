@@ -6,7 +6,7 @@
 
 
 class CameraSystem:
-    """カメラシステムクラス."""
+    """aaa."""
 
     def __init__(self) -> None:
         """カメラシステムのコンストラクタ."""
