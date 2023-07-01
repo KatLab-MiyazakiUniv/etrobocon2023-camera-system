@@ -10,7 +10,7 @@ import time
 
 def Client():
     """走行体の状況を把握するために、サーバにリクエストを送る."""
-    url = 'http://127.0.0.1:8000/robot_info/state'
+    url = 'http://192.168.11.17:8000/robot_info/state'
     req = urllib.request.Request(url)
     response_text = ""
 
