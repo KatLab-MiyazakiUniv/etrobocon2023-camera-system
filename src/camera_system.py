@@ -16,4 +16,5 @@ class CameraSystem:
     def start(self) -> None:
         """ゲーム攻略を計画する."""
         # キャリブレーション後に走行体状況監視モジュールを実行する
-        Client.client()
+        client = Client()
+        client.client()
