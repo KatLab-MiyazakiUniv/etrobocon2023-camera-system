@@ -9,6 +9,7 @@ import time
 
 
 def Client():
+    """走行体の状況を把握するために、サーバにリクエストを送る."""
     url = 'http://127.0.0.1:8000/robot_info/state'
     req = urllib.request.Request(url)
     response_text = ""
@@ -29,7 +30,7 @@ def Client():
         except urllib.error.URLError as err:
             print(err.reason)
             return
-             
+
         # レスポンスが"notReady"の時
         if response_text == "notReady":
             print("notReady")
@@ -48,6 +49,4 @@ def Client():
             break
 
         # 2秒待つ
-        time.sleep(2)        
-
-    return
+        time.sleep(2)
