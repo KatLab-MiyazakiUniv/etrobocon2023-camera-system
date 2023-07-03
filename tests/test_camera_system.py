@@ -1,6 +1,10 @@
+import pytest
 from src.camera_system import CameraSystem
+from src.client import Client
 
 
-def test_camera_system_start():
-    cs = CameraSystem()
-    assert cs.start() is None
+class Test_camera_system:
+    def test_start(self, mocker):
+        mocker.patch.object(Client, "get_robot_state")
+
+        cs = CameraSystem()

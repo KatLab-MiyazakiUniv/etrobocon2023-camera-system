@@ -44,4 +44,5 @@ class Client:
             print(err.reason)
             return
 
-        return response_text
+        # return response_text
+        return
