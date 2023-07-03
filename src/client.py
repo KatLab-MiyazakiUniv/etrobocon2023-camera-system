@@ -21,14 +21,14 @@ class Client:
 
     def get_robot_state(self) -> str:
         """走行体の状態を取得するために、サーバにリクエストを送る.
-        
+
         Returns:
             response_text: 走行体の状態
         """
         url = f"http://{self.server_ip}/robot_info/state"
         req = urllib.request.Request(url)
         response_text = ""
-        
+
         try:
             with urllib.request.urlopen(req) as res:
                 response_data = res.read()
