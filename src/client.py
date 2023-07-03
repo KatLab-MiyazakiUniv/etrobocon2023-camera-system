@@ -28,7 +28,7 @@ class Client:
         url = f"http://{self.server_ip}/robot_info/state"
         req = urllib.request.Request(url)
         response_text = ""
-   
+        
         try:
             with urllib.request.urlopen(req) as res:
                 response_data = res.read()

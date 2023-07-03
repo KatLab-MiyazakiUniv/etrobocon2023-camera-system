@@ -16,6 +16,7 @@ class CameraSystem:
     def start(self) -> None:
         """ゲーム攻略を計画する."""
         # キャリブレーション後に走行体状態取得モジュールを実行する
-        server_ip = "192.168.11.17:8000"  # et2023@katlabなら192.168.11.16、et2023@katlab2なら192.168.11.17
+        # sever_ipは、et2023@katlabなら192.168.11.16、et2023@katlab2なら192.168.11.17
+        server_ip = "192.168.11.17:8000"
         client = Client(server_ip)
         client.get_robot_state()
