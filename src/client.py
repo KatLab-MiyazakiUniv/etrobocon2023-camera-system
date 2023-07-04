@@ -37,10 +37,10 @@ class Client:
         # HTTP通信でのエラー時
         except urllib.error.HTTPError as err:
             print(err.code)
-            return
+            return 1
         # URLの間違いなどによるエラー時
         except urllib.error.URLError as err:
             print(err.reason)
-            return
+            return err.reason
 
         return response_text
