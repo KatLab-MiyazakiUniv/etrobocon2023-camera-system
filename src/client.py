@@ -2,7 +2,7 @@
 
 走行体の状態を取得する.
 @author: aridome222
-@note 参考 https://qiita.com/hoto17296/items/8fcf55cc6cd823a18217
+@note: 参考 https://qiita.com/hoto17296/items/8fcf55cc6cd823a18217
 """
 import urllib.request
 
