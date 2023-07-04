@@ -4,6 +4,7 @@
 @author: kawanoichi aridome222
 """
 from client import Client
+import time
 
 
 class CameraSystem:
