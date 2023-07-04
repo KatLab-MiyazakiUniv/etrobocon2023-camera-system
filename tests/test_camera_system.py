@@ -1,8 +1,7 @@
 """CameraSystemクラスのpytestコードを記述するモジュール.
 
-モック化はunittestのmockを使用する
-
 @author: kawanoichi aridome222
+@NOTE: モック化はunittestのmockを使用する
 """
 from src.camera_system import CameraSystem
 from unittest import mock
