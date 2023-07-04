@@ -5,7 +5,6 @@
 @note 参考 https://qiita.com/hoto17296/items/8fcf55cc6cd823a18217
 """
 import urllib.request
-import time
 
 
 class Client:

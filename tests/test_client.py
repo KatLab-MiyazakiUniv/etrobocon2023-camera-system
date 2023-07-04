@@ -1,8 +1,11 @@
-import pytest
+"""CameraSystemクラスのテストコードを記述するモジュール.
+
+@author: kawanoichi aridome222
+"""
 from src.client import Client
 
 
-def test_client(mocker):
-    mocker.patch.object(Client, "get_robot_state")
-    client = Client("192.168.11.17:8000")
-    client.get_robot_state()
+class TestClient:
+    def test_client(self):
+        client = Client("192.168.11.17:8000")
+        client.get_robot_state()

@@ -1,10 +1,14 @@
-import pytest
+"""CameraSystemクラスのテストコードを記述するモジュール.
+
+@author: kawanoichi aridome222
+"""
 from src.camera_system import CameraSystem
-from src.client import Client
+from unittest import mock
 
 
-class Test_camera_system:
-    def test_start(self, mocker):
-        mocker.patch.object(Client, "get_robot_state")
-
+class TestCameraSystem:
+    @mock.patch("src.camera_system.Client.get_robot_state")
+    def test_start(self, mock_get_robot_state):
         cs = CameraSystem()
+        mock_get_robot_state.return_value = "finish"
+        cs.start()
