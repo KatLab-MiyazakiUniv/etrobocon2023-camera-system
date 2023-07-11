@@ -18,8 +18,8 @@ class CameraSystem:
     def start(self) -> None:
         """ゲーム攻略を計画する."""
         print("camera-system start!!")
-        # ci = CameraInterface()
-        # ci.recording()
+        ci = CameraInterface(0)
+        ci.recording()
         # キャリブレーション後に走行体状態取得モジュールを実行する
         # sever_ipは、走行体１なら192.168.11.16、走行体２なら192.168.11.17
         server_ip = "192.168.11.17:8000"

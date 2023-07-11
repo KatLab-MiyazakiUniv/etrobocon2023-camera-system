@@ -10,7 +10,7 @@ class CameraInterface:
             camera_id (int): カメラID
         """
         self.camera = cv2.VideoCapture(camera_id)
-        self.movie_dir = "../video/"
+        self.movie_dir = "video/"
 
     def recording(self) -> None:
         """動画を撮影する."""
@@ -42,6 +42,3 @@ class CameraInterface:
         video.release()  # 動画ファイルを解放
         cv2.destroyAllWindows()  # ウィンドウを閉じる
 
-if __name__ == '__main__':
-    ci = CameraInterface(0)
-    ci.recording()
