@@ -1,6 +1,13 @@
+"""カメラインターフェースモジュール.
+
+Webカメラの制御を行う
+@author: miyashita64
+"""
+
 import cv2
 import numpy as np
 from datetime import datetime
+
 
 class CameraInterface:
     """カメラを制御するクラス"""
@@ -83,6 +90,7 @@ class CameraInterface:
         contours, _ = cv2.findContours(
             thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # 輪郭線の検出(描画対象, 輪郭線リスト, 輪郭線のインデックス, 線のRGB値, 線の太さ)
-        mark_frame = cv2.drawContours(frame.copy(), contours, -1, (0, 255, 0), 3)
+        mark_frame = cv2.drawContours(
+            frame.copy(), contours, -1, (0, 255, 0), 3)
 
         return mark_frame
