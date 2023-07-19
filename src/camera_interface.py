@@ -77,7 +77,6 @@ class CameraInterface:
         Returns:
             mark_frame: 動体の輪郭線を描画したフレーム
         """
-
         # グレースケール変換
         gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # 現在のフレームと移動平均との差を計算
