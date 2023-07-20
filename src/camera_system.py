@@ -1,7 +1,7 @@
 """カメラシステムモジュール.
 
 カメラシステムにおいて、一番最初に呼ばれるクラスを定義している
-@author: kawanoichi aridome222 miyashita64
+@author: kawanoichi aridome222
 """
 from client import Client
 import time
