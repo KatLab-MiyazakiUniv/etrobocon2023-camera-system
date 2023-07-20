@@ -10,7 +10,7 @@ from datetime import datetime
 
 
 class CameraInterface:
-    """カメラを制御するクラス"""
+    """カメラを制御するクラス."""
 
     def __init__(self, camera_id: int) -> None:
         """コンストラクタ.
