@@ -88,7 +88,7 @@ class CameraInterface:
         # 輪郭線の検出
         contours, _ = cv2.findContours(
             thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        # 輪郭線の検出(描画対象, 輪郭線リスト, 輪郭線のインデックス, 線のRGB値, 線の太さ)
+        # 輪郭線の描画(描画対象, 輪郭線リスト, 輪郭線のインデックス, 線のRGB値, 線の太さ)
         mark_frame = cv2.drawContours(
             frame.copy(), contours, -1, (0, 255, 0), 3)
 
