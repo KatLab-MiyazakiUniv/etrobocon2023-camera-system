@@ -9,8 +9,13 @@ from unittest import mock
 
 class TestCameraSystem:
     @mock.patch("src.camera_system.Client.get_robot_state")
-    def test_start(self, mock_get_robot_state):
+    @mock.patch("src.camera_system.TrainTracker.calibrate")
+    @mock.patch("src.camera_system.TrainTracker.observe")
+    def test_start(self, mock_observe, mock_calibrate, mock_get_robot_state):
+        # 引数は、mock.patchが一番下のものから第1引数に対応するため注意
         cs = CameraSystem()
         # finishを返すようにモック化
         mock_get_robot_state.return_value = "finish"
+        mock_calibrate.return_value = None
+        mock_observe.return_value = None
         cs.start()
