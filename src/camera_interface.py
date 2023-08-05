@@ -18,7 +18,6 @@ class CameraInterface:
         Args:
             camera_id (int): カメラID
         """
-        # self.camera = cv2.VideoCapture(camera_id)
         self.camera = cv2.VideoCapture("video/test3.avi")
         self.output_dir = "video/"
 
@@ -50,9 +49,6 @@ class CameraInterface:
         self.video.release()        # 動画ファイルを解放
         self.mark_video.release()   # 動画ファイルを解放
         cv2.destroyAllWindows()  # ウィンドウを閉じる
-        # テスト用
-        self.camera.release()
-        self.camera = cv2.VideoCapture("video/test3.avi")
 
     def get_frame(self) -> (bool, np.ndarray):
         """撮影する.
