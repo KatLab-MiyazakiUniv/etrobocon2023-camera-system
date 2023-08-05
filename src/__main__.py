@@ -9,14 +9,11 @@
 
 import argparse
 import camera_system
-from train_tracker import TrainTracker
 
 if __name__ == '__main__':
-    tt = TrainTracker(0)
-    tt.observe()
-    # parser = argparse.ArgumentParser(description='Camera System settings.')
+    parser = argparse.ArgumentParser(description='Camera System settings.')
 
-    # args = parser.parse_args()
+    args = parser.parse_args()
 
-    # cs = camera_system.CameraSystem()
-    # cs.start()
+    cs = camera_system.CameraSystem()
+    cs.start()
