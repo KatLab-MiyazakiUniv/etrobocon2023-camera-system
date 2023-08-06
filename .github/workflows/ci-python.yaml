@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   CI-Python:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -13,7 +13,7 @@ jobs:
         run: pipx install poetry
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.10.9'
       - run: poetry install
 
       - name: Install dependencies
@@ -31,10 +31,10 @@ jobs:
           # Job Summaries にカバレッジの概要を設定する
           echo '## Coverage'                   >> ${GITHUB_STEP_SUMMARY}
           echo '```'                           >> ${GITHUB_STEP_SUMMARY}
-          poetry run python -m coverage report >> ${GITHUB_STEP_SUMMARY}
+          poetry run python -m coverage report -i >> ${GITHUB_STEP_SUMMARY}
           echo '```'                           >> ${GITHUB_STEP_SUMMARY}
 
-          poetry run coverage report
+          poetry run coverage report -i
 
       # PythonのコードをPEP8のガイドラインに基づいてチェックするためのツール
       - name: Format check

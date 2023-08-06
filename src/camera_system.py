@@ -34,5 +34,7 @@ class CameraSystem:
             time.sleep(2)
 
         tt = TrainTracker(0)
+        # Webカメラのキャリブレーション
         tt.calibrate()
+        # IoT列車の監視を開始
         tt.observe()
