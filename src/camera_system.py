@@ -21,20 +21,23 @@ class CameraSystem:
         # キャリブレーション後に走行体状態取得モジュールを実行する
         # sever_ipは、走行体１なら192.168.11.16、走行体２なら192.168.11.17
         server_ip = "192.168.11.17:8000"
-        client = Client(server_ip)
-        while True:
-            state = client.get_robot_state()
-            # 走行体の状態が"finish"になった時、終了する。
-            if state == "finish":
-                print(state)
-                break
-            else:
-                print(state)
-            # 2秒待つ
-            time.sleep(2)
+        # client = Client(server_ip)
+        # while True:
+        #     state = client.get_robot_state()
+        #     # 走行体の状態が"finish"になった時、終了する。
+        #     if state == "finish":
+        #         print(state)
+        #         break
+        #     else:
+        #         print(state)
+        #     # 2秒待つ
+        #     time.sleep(2)
 
         tt = TrainTracker(0)
         # Webカメラのキャリブレーション
         tt.calibrate()
         # IoT列車の監視を開始
         tt.observe()
+
+        # 列車攻略が終わったらインスタンスを破棄する
+        del tt

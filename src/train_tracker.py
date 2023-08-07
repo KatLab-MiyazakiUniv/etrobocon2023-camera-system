@@ -19,12 +19,8 @@ class TrainTracker:
             camera_id (int): カメラID
         """
         self.camera = CameraInterface(camera_id)
-        self.diff_border = 20
+        self.diff_border = 20       # 動体検知におけるフレームの差の閾値
         self.observe_rect_points = [(0, 0), (0, 0)]
-
-    def __del__(self) -> None:
-        """デストラクタ."""
-        del self.camera
 
     def calibrate(self) -> None:
         """キャリブレーション."""
@@ -67,8 +63,8 @@ class TrainTracker:
             param: 任意パラメータ
         """
         if event == cv2.EVENT_LBUTTONDOWN:
-            # クリック時の座標を記録
-            self.observe_rect_points.append((x, y))
+            # クリック時の座標を記録(最新の2点のみ保持)
+            self.observe_rect_points = [self.observe_rect_points[-1], (x, y)]
 
     def draw_observe_rect(self, frame) -> np.ndarray:
         """監視する領域をフレームに描画する.
@@ -125,7 +121,7 @@ class TrainTracker:
                 observe_right = max(observe_x_values)
 
                 # 列車が指定領域に侵入しているかを判定する.
-                # 列車の先頭(下方向)の動画内の高さが指定領域内
+                # 列車の先頭(下方向)のy座標が指定領域内
                 if observe_top < train_bottom < observe_bottom:
                     # 列車の動画内の横幅が指定領域内
                     if observe_left < train_left \
@@ -183,10 +179,7 @@ class TrainTracker:
             mark_frame: 列車の範囲を描画したフレーム
             train_rect_points: 列車の左上座標と右下座標のリスト
         """
-        # RGB値が[0, 255, 0]の範囲のピクセルをマスクとして取得
-        green_mask = (mark_frame == [0, 255, 0]).all(axis=-1)
-
-        # 緑色の範囲内のピクセルをマスクとして取得
+        # [0, 255, 0]であるピクセル(緑)を255,そうでないピクセルを0に変換
         green_mask = cv2.inRange(mark_frame, np.array(
             [0, 255, 0]), np.array([0, 255, 0]))
 

@@ -20,6 +20,8 @@ class CameraInterface:
         """
         self.camera = cv2.VideoCapture(camera_id)
         self.output_dir = "video/"
+        self.video = None
+        self.mark_video = None
 
     def __del__(self) -> None:
         """デストラクタ."""
@@ -57,4 +59,5 @@ class CameraInterface:
             success (bool): フレーム取得の可否(true:成功/false:失敗)
             frame (np.ndarray): フレーム
         """
-        return self.camera.read()
+        success, frame = self.camera.read()
+        return (success, frame)
