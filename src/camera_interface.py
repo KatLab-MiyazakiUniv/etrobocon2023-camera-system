@@ -27,12 +27,12 @@ class CameraInterface:
         """デストラクタ."""
         self.camera.release()  # カメラデバイスを解放
 
-    def start_record(self):
+    def start_record(self) -> (cv2.VideoWriter, cv2.VideoWriter):
         """撮影を開始する.
 
         Returns:
-            video: 撮影した映像
-            mark_video: 列車を検出しマークした映像
+            video (cv2.VideoWriter): 撮影した映像
+            mark_video (cv2.VideoWriter): 列車を検出しマークした映像
         """
         # 動画のコーデック(変換器)
         codec = cv2.VideoWriter_fourcc(*'mp4v')

@@ -38,6 +38,3 @@ class CameraSystem:
         tt.calibrate()
         # IoT列車の監視を開始
         tt.observe()
-
-        # 列車攻略が終わったらインスタンスを破棄する
-        del tt

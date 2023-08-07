@@ -70,9 +70,9 @@ class TrainTracker:
         """監視する領域をフレームに描画する.
 
         Args:
-            frame: 描画対象フレーム
+            frame (np.ndarray): 描画対象フレーム
         Returns:
-            mark_frame: 監視する領域を描画したフレーム
+            mark_frame (np.ndarray): 監視する領域を描画したフレーム
         """
         mark_frame = frame.copy()
         cv2.rectangle(mark_frame, self.observe_rect_points[-1],
@@ -176,8 +176,9 @@ class TrainTracker:
         Args:
             mark_frame (np.ndarray): 現在のフレーム
         Returns:
-            mark_frame: 列車の範囲を描画したフレーム
-            train_rect_points: 列車の左上座標と右下座標のリスト
+            mark_frame (np.ndarray): 列車の範囲を描画したフレーム
+            train_rect_points (list[tuple[int, int], tuple[int, int]]):
+                列車の左上座標と右下座標のリスト
         """
         # [0, 255, 0]であるピクセル(緑)を255,そうでないピクセルを0に変換
         green_mask = cv2.inRange(mark_frame, np.array(
