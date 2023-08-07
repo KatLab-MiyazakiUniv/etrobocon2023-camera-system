@@ -52,15 +52,14 @@ class TrainTracker:
         # リソースを解放
         self.camera.end_record()
 
-    def mouse_callback(self, event, x, y, flags, param) -> None:
+    def mouse_callback(self, event, x, y, *_) -> None:
         """キャリブレーションのクリック時の処理.
 
         Args:
             event: クリックイベント
             x: クリックのx座標
             y: クリックのy座標
-            flags: 追加情報のフラグ
-            param: 任意パラメータ
+            _: 使用しない値(追加情報のフラグ, 任意パラメータ)
         """
         if event == cv2.EVENT_LBUTTONDOWN:
             # クリック時の座標を記録(最新の2点のみ保持)
