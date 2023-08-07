@@ -143,32 +143,6 @@ class TrainTracker:
         # リソースを解放
         self.camera.end_record()
 
-    def detect_motion(self, frame, initial_frame) -> np.ndarray:
-        """フレームから動体を検出する.
-
-        Args:
-            frame (np.ndarray): 現在のフレーム
-            initial_frame (np.ndarray): 初期フレーム
-        Returns:
-            mark_frame (np.ndarray): 動体の輪郭線を描画したフレーム
-        """
-        # グレースケール変換
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        # 現在のフレームと移動平均との差を計算
-        cv2.accumulateWeighted(gray_frame, initial_frame, 0.6)
-        delta = cv2.absdiff(gray_frame, cv2.convertScaleAbs(initial_frame))
-        # 閾値処理で二値化を行う
-        thresh = cv2.threshold(delta, self.diff_border,
-                               255, cv2.THRESH_BINARY)[1]
-        # 輪郭線の検出
-        contours, _ = cv2.findContours(
-            thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        # 輪郭線の描画(描画対象, 輪郭線リスト, 輪郭線のインデックス, 線のRGB値, 線の太さ)
-        mark_frame = cv2.drawContours(
-            frame.copy(), contours, -1, (0, 255, 0), 3)
-
-        return mark_frame
-
     def detect_train(self, frame, initial_frame) -> (
             np.ndarray, list[tuple[int, int], tuple[int, int]]):
         """フレームから列車を検出する.
