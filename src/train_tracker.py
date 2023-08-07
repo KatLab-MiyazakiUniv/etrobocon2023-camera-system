@@ -123,7 +123,7 @@ class TrainTracker:
                 # 列車が指定領域に侵入しているかを判定する.
                 # 列車の先頭(下方向)のy座標が指定領域内
                 if observe_top < train_bottom < observe_bottom:
-                    # 列車の動画内の横幅が指定領域内
+                    # 列車の動画内のx座標が指定領域内
                     if observe_left < train_left \
                             and train_right < observe_right:
                         # 列車の領域を赤く塗りつぶし
