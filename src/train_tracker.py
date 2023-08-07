@@ -105,9 +105,9 @@ class TrainTracker:
             mark_frame = self.draw_observe_rect(mark_frame)
 
             if len(train_rect_points) >= 2:
-                # 列車の境界
-                (train_left, train_top), (train_right,
-                                          train_bottom) = train_rect_points
+                # 列車の境界 (左,上),(右,下) (上は使用しない)
+                (train_left, _), (train_right,
+                                  train_bottom) = train_rect_points
                 # 描画した指定領域
                 observe_y_values = [
                     y for _, y in self.observe_rect_points]
