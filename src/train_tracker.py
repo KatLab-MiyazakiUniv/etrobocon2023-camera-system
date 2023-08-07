@@ -98,10 +98,10 @@ class TrainTracker:
                 initial_frame = gray_frame.copy().astype("float")
                 # 以降の処理をスキップし次のループへ
                 continue
-            # 動体の検出
-            mark_frame = self.detect_motion(frame, initial_frame)
+
             # 列車の検出
-            mark_frame, train_rect_points = self.detect_train(mark_frame)
+            mark_frame, train_rect_points = self.detect_train(
+                frame, initial_frame)
             # クリックされた領域の描画
             mark_frame = self.draw_observe_rect(mark_frame)
 
@@ -169,50 +169,52 @@ class TrainTracker:
 
         return mark_frame
 
-    def detect_train(self, mark_frame) -> (
+    def detect_train(self, frame, initial_frame) -> (
             np.ndarray, list[tuple[int, int], tuple[int, int]]):
         """フレームから列車を検出する.
 
         Args:
-            mark_frame (np.ndarray): 現在のフレーム
+            frame (np.ndarray): 現在のフレーム
         Returns:
             mark_frame (np.ndarray): 列車の範囲を描画したフレーム
             train_rect_points (list[tuple[int, int], tuple[int, int]]):
                 列車の左上座標と右下座標のリスト
         """
-        # [0, 255, 0]であるピクセル(緑)を255,そうでないピクセルを0に変換
-        green_mask = cv2.inRange(mark_frame, np.array(
-            [0, 255, 0]), np.array([0, 255, 0]))
-
-        # 緑色の点を物体として認識するために輪郭検出を行う
+        # グレースケール変換
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # 現在のフレームと移動平均との差を計算
+        cv2.accumulateWeighted(gray_frame, initial_frame, 0.6)
+        delta = cv2.absdiff(gray_frame, cv2.convertScaleAbs(initial_frame))
+        # 閾値処理で二値化を行い動体を検出する
+        thresh = cv2.threshold(delta, self.diff_border,
+                               255, cv2.THRESH_BINARY)[1]
+        # 輪郭線の検出
         contours, _ = cv2.findContours(
-            green_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # 輪郭線の描画(描画対象, 輪郭線リスト, 輪郭線のインデックス, 線のRGB値, 線の太さ)
+        mark_frame = cv2.drawContours(
+            frame.copy(), contours, -1, (0, 255, 0), 3)
 
         # 物体の位置情報を格納するリスト
-        train_positions = []
+        train_xs = []
+        train_ys = []
 
         # 各輪郭を処理して物体の位置情報を取得
         for contour in contours:
-            # 輪郭の点を取得
-            for point in contour:
-                x, y = point[0]
-                # 緑色の点に対して赤い点を描画
-                mark_frame[y, x] = [0, 0, 255]
-
             # 輪郭の外接矩形を取得
             x, y, w, h = cv2.boundingRect(contour)
 
             # 物体の位置情報をリストに追加
-            # 左上座標(x, y)と右下座標(x+w, y+h)を追加
-            train_positions.append((x, y, x + w, y + h))
+            train_xs += [x, x+w]
+            train_ys += [y, y+h]
 
         # すべての緑色の点の中心座標を計算して赤い枠を描画
         train_rect_points = []
-        if len(train_positions) > 0:
-            min_x = min(pos[0] for pos in train_positions)
-            max_x = max(pos[2] for pos in train_positions)
-            min_y = min(pos[1] for pos in train_positions)
-            max_y = max(pos[3] for pos in train_positions)
+        if len(train_xs) > 0 and len(train_ys):
+            min_x = min(train_xs)
+            max_x = max(train_xs)
+            min_y = min(train_ys)
+            max_y = max(train_ys)
             train_rect_points = [(min_x, min_y), (max_x, max_y)]
 
             # 物体を赤色の四角形で囲む
