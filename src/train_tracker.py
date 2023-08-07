@@ -111,9 +111,9 @@ class TrainTracker:
                                           train_bottom) = train_rect_points
                 # 描画した指定領域
                 observe_y_values = [
-                    y for x, y in self.observe_rect_points[-2:]]
+                    y for _, y in self.observe_rect_points]
                 observe_x_values = [
-                    x for x, y in self.observe_rect_points[-2:]]
+                    x for x, _ in self.observe_rect_points]
 
                 observe_top = min(observe_y_values)
                 observe_bottom = max(observe_y_values)
@@ -175,14 +175,14 @@ class TrainTracker:
 
         # 各輪郭を処理して物体の位置情報を取得
         for contour in contours:
-            # 輪郭の外接矩形を取得
+            # バウンディングボックスの左上座標、幅、高さを取得
             x, y, w, h = cv2.boundingRect(contour)
 
             # 物体の位置情報をリストに追加
             train_xs += [x, x+w]
             train_ys += [y, y+h]
 
-        # すべての緑色の点の中心座標を計算して赤い枠を描画
+        # すべての緑色の点の中心座標を計算して赤いバウンディングボックスを描画
         train_rect_points = []
         if len(train_xs) > 0 and len(train_ys):
             min_x = min(train_xs)
@@ -191,7 +191,7 @@ class TrainTracker:
             max_y = max(train_ys)
             train_rect_points = [(min_x, min_y), (max_x, max_y)]
 
-            # 物体を赤色の四角形で囲む
+            # 物体を赤色のバウンディングボックスで囲む
             cv2.rectangle(mark_frame, train_rect_points[0],
                           train_rect_points[1], (0, 0, 255), 2)
 
