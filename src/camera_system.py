@@ -1,10 +1,11 @@
 """カメラシステムモジュール.
 
 カメラシステムにおいて、一番最初に呼ばれるクラスを定義している
-@author: kawanoichi aridome222
+@author: kawanoichi aridome222 miyashita64
 """
-from client import Client
 import time
+from client import Client
+from train_tracker import TrainTracker
 
 
 class CameraSystem:
@@ -31,3 +32,9 @@ class CameraSystem:
                 print(state)
             # 2秒待つ
             time.sleep(2)
+
+        tt = TrainTracker(0)
+        # Webカメラのキャリブレーション
+        tt.calibrate()
+        # IoT列車の監視を開始
+        tt.observe()
