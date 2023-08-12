@@ -1,5 +1,10 @@
 **/__pycache__/
 .coverage
 coverage.xml
+
 video/*
 !video/.gitkeep
+
+*.png
+*.txt
+detect_fig/verification_data
