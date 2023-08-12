@@ -5,6 +5,13 @@ coverage.xml
 video/*
 !video/.gitkeep
 
+.vscode/
+
+# 機械学習
 *.png
+*.jpg
 *.txt
-detect_fig/verification_data
+verification_data/
+data/
+images640/
+results.csv
