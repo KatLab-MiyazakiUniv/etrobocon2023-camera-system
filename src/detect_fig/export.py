@@ -31,25 +31,25 @@ if platform.system() != 'Windows':
 MACOS = platform.system() == 'Darwin'  # macOS environment
 
 
-class iOSModel(torch.nn.Module):
+# class iOSModel(torch.nn.Module):
 
-    def __init__(self, model, im):
-        super().__init__()
-        b, c, h, w = im.shape  # batch, channel, height, width
-        self.model = model
-        self.nc = model.nc  # number of classes
-        if w == h:
-            self.normalize = 1. / w
-        else:
-            # broadcast (slower, smaller)
-            self.normalize = torch.tensor([1. / w, 1. / h, 1. / w, 1. / h])
-            # np = model(im)[0].shape[1]  # number of points
-            # self.normalize = torch.tensor([1. / w, 1. / h, 1. / w, 1. / h]).expand(np, 4)  # explicit (faster, larger)
+#     def __init__(self, model, im):
+#         super().__init__()
+#         b, c, h, w = im.shape  # batch, channel, height, width
+#         self.model = model
+#         self.nc = model.nc  # number of classes
+#         if w == h:
+#             self.normalize = 1. / w
+#         else:
+#             # broadcast (slower, smaller)
+#             self.normalize = torch.tensor([1. / w, 1. / h, 1. / w, 1. / h])
+#             # np = model(im)[0].shape[1]  # number of points
+#             # self.normalize = torch.tensor([1. / w, 1. / h, 1. / w, 1. / h]).expand(np, 4)  # explicit (faster, larger)
 
-    def forward(self, x):
-        xywh, conf, cls = self.model(x)[0].squeeze().split((4, 1, self.nc), 1)
-        # confidence (3780, 80), coordinates (3780, 4)
-        return cls * conf, xywh * self.normalize
+#     def forward(self, x):
+#         xywh, conf, cls = self.model(x)[0].squeeze().split((4, 1, self.nc), 1)
+#         # confidence (3780, 80), coordinates (3780, 4)
+#         return cls * conf, xywh * self.normalize
 
 
 def export_formats():
