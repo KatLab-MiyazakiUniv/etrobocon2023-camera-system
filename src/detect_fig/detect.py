@@ -116,7 +116,23 @@ def run(
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
+
+    """初回ループの出力
+    path: /home/kawano/etrobocon2023-camera-system/src/detect_fig/verification_data/image1.png
+    im.shape: (3, 640, 640)
+    im0s.shape: (640, 640, 3)
+    vid_cap: None
+    s: image 1/36 /home/kawano/etrobocon2023-camera-system/src/detect_fig/verification_data/image1.png: 
+    """
+    i = 0
     for path, im, im0s, vid_cap, s in dataset:
+        if i is 0:
+            print("path:", path)
+            print("im", im.shape)
+            print("im0s,", im0s.shape)
+            print("vid_cap", vid_cap)
+            print("s", s)
+            i = 1
         with dt[0]:
             im = torch.from_numpy(im).to(model.device)
             im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
@@ -245,9 +261,9 @@ def parse_opt():
     parser.add_argument('--weights', nargs='+', type=str,
                         default='yolov5s.pt', help='model path or triton URL')
     # default=ROOT / 'yolov5s.pt', help='model path or triton URL')
-    parser.add_argument('--source', type=str, default=# parser.add_argument('--source', type=str, default=ROOT /
+    parser.add_argument('--source', type=str, default=  # parser.add_argument('--source', type=str, default=ROOT /
                         'data/images', help='file/dir/URL/glob/screen/0(webcam)')
-    parser.add_argument('--data', type=str, default=# parser.add_argument('--data', type=str, default=ROOT /
+    parser.add_argument('--data', type=str, default=  # parser.add_argument('--data', type=str, default=ROOT /
                         'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+',
                         type=int, default=[640], help='inference size h,w')
@@ -278,7 +294,7 @@ def parse_opt():
                         help='visualize features')
     parser.add_argument('--update', action='store_true',
                         help='update all models')
-    parser.add_argument('--project', default=# parser.add_argument('--project', default=ROOT /
+    parser.add_argument('--project', default=  # parser.add_argument('--project', default=ROOT /
                         'runs/detect', help='save results to project/name')
     parser.add_argument('--name', default='exp',
                         help='save results to project/name')
