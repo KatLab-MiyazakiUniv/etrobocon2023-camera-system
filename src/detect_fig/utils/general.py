@@ -11,14 +11,14 @@ import logging.config
 import math
 import os
 import platform
-import random
+# import random
 import re
-import signal
+# import signal
 import subprocess
 import sys
 import time
 import urllib
-from copy import deepcopy
+# from copy import deepcopy
 from datetime import datetime
 from itertools import repeat
 from multiprocessing.pool import ThreadPool
@@ -353,64 +353,6 @@ def git_describe(path=ROOT):  # path must be a directory
         return ''
 
 
-# @TryExcept()
-# @WorkingDirectory(ROOT)
-# def check_git_status(repo='ultralytics/yolov5', branch='master'):
-#     # YOLOv5 status check, recommend 'git pull' if code is out of date
-#     url = f'https://github.com/{repo}'
-#     msg = f', for updates see {url}'
-#     s = colorstr('github: ')  # string
-#     assert Path('.git').exists(), s + \
-#         'skipping check (not a git repository)' + msg
-#     assert check_online(), s + 'skipping check (offline)' + msg
-
-#     splits = re.split(pattern=r'\s', string=check_output(
-#         'git remote -v', shell=True).decode())
-#     matches = [repo in s for s in splits]
-#     if any(matches):
-#         remote = splits[matches.index(True) - 1]
-#     else:
-#         remote = 'ultralytics'
-#         check_output(f'git remote add {remote} {url}', shell=True)
-#     check_output(f'git fetch {remote}', shell=True, timeout=5)  # git fetch
-#     local_branch = check_output(
-#         'git rev-parse --abbrev-ref HEAD', shell=True).decode().strip()  # checked out
-#     # commits behind
-#     n = int(check_output(
-#         f'git rev-list {local_branch}..{remote}/{branch} --count', shell=True))
-#     if n > 0:
-#         pull = 'git pull' if remote == 'origin' else f'git pull {remote} {branch}'
-#         s += f"⚠️ YOLOv5 is out of date by {n} commit{'s' * (n > 1)}. Use '{pull}' or 'git clone {url}' to update."
-#     else:
-#         s += f'up to date with {url} ✅'
-#     LOGGER.info(s)
-
-
-# @WorkingDirectory(ROOT)
-# def check_git_info(path='.'):
-#     # YOLOv5 git info check, return {remote, branch, commit}
-#     check_requirements('gitpython')
-#     import git
-#     try:
-#         repo = git.Repo(path)
-#         # i.e. 'https://github.com/ultralytics/yolov5'
-#         remote = repo.remotes.origin.url.replace('.git', '')
-#         commit = repo.head.commit.hexsha  # i.e. '3134699c73af83aac2a481435550b968d5792c0d'
-#         try:
-#             branch = repo.active_branch.name  # i.e. 'main'
-#         except TypeError:  # not on any branch
-#             branch = None  # i.e. 'detached HEAD' state
-#         return {'remote': remote, 'branch': branch, 'commit': commit}
-#     except git.exc.InvalidGitRepositoryError:  # path is not a git dir
-#         return {'remote': None, 'branch': None, 'commit': None}
-
-
-# def check_python(minimum='3.8.0'):
-#     # Check current python version vs. required python version
-#     check_version(platform.python_version(),
-#                   minimum, name='Python ', hard=True)
-
-
 def check_version(current='0.0.0', minimum='0.0.0', name='version ', pinned=False, hard=False, verbose=False):
     # Check version vs. required version
     current, minimum = (pkg.parse_version(x) for x in (current, minimum))
@@ -435,23 +377,6 @@ def check_img_size(imgsz, s=32, floor=0):
         LOGGER.warning(
             f'WARNING ⚠️ --img-size {imgsz} must be multiple of max stride {s}, updating to {new_size}')
     return new_size
-
-
-# def check_imshow(warn=False):
-#     # Check if environment supports image displays
-#     try:
-#         assert not is_jupyter()
-#         assert not is_docker()
-#         cv2.imshow('test', np.zeros((1, 1, 3)))
-#         cv2.waitKey(1)
-#         cv2.destroyAllWindows()
-#         cv2.waitKey(1)
-#         return True
-#     except Exception as e:
-#         if warn:
-#             LOGGER.warning(
-#                 f'WARNING ⚠️ Environment does not support cv2.imshow() or PIL Image.show()\n{e}')
-#         return False
 
 
 def check_suffix(file='yolov5s.pt', suffix=('.pt', ), msg=''):
@@ -587,37 +512,6 @@ def check_dataset(data, autodownload=True):
     check_font('Arial.ttf' if is_ascii(
         data['names']) else 'Arial.Unicode.ttf', progress=True)  # download fonts
     return data  # dictionary
-
-
-# def check_amp(model):
-#     # Check PyTorch Automatic Mixed Precision (AMP) functionality. Return True on correct operation
-#     from models.common import AutoShape, DetectMultiBackend
-
-#     def amp_allclose(model, im):
-#         # All close FP32 vs AMP results
-#         m = AutoShape(model, verbose=False)  # model
-#         a = m(im).xywhn[0]  # FP32 inference
-#         m.amp = True
-#         b = m(im).xywhn[0]  # AMP inference
-#         # close to 10% absolute tolerance
-#         return a.shape == b.shape and torch.allclose(a, b, atol=0.1)
-
-#     prefix = colorstr('AMP: ')
-#     device = next(model.parameters()).device  # get model device
-#     if device.type in ('cpu', 'mps'):
-#         return False  # AMP only used on CUDA devices
-#     f = ROOT / 'data' / 'images' / 'bus.jpg'  # image to check
-#     im = f if f.exists() else 'https://ultralytics.com/images/bus.jpg' if check_online() else np.ones((640, 640, 3))
-#     try:
-#         assert amp_allclose(deepcopy(model), im) or amp_allclose(
-#             DetectMultiBackend('yolov5n.pt', device), im)
-#         LOGGER.info(f'{prefix}checks passed ✅')
-#         return True
-#     except Exception:
-#         help_url = 'https://github.com/ultralytics/yolov5/issues/7908'
-#         LOGGER.warning(
-#             f'{prefix}checks failed ❌, disabling Automatic Mixed Precision. See {help_url}')
-#         return False
 
 
 def yaml_load(file='data.yaml'):
