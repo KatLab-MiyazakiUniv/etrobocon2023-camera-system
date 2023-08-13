@@ -5,7 +5,9 @@ help:
 	@echo " $$ make rm"
 
 predict:
-	python detect.py --weight runs/train/exp/weights/best.pt --source verification_data/ --imgsz 640
+	python detect.py --source detect_image --project detect_result
+# python detect.py --source detect_image/image1.png --project detect_result
+# python detect.py --source detect_image/image1.png --project detect_result --conf-thres 0.99
 
 rm:
-	rm -rf runs/detect/
+	rm -rf detect_result/

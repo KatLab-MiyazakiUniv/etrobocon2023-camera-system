@@ -12,7 +12,3 @@ video/*
 *.jpg
 *.txt
 !requirements.txt
-verification_data/
-data/
-images640/
-results.csv
