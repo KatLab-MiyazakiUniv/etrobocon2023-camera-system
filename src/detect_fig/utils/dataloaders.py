@@ -8,7 +8,6 @@ import os
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
 
 from utils.augmentations import letterbox
 import cv2
@@ -24,32 +23,6 @@ LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))
 RANK = int(os.getenv('RANK', -1))
 PIN_MEMORY = str(os.getenv('PIN_MEMORY', True)).lower(
 ) == 'true'  # global pin_memory for dataloaders
-
-
-def exif_transpose(image):
-    """
-    Transpose a PIL image accordingly if it has an EXIF Orientation tag.
-    Inplace version of https://github.com/python-pillow/Pillow/blob/master/src/PIL/ImageOps.py exif_transpose()
-
-    :param image: The image to transpose.
-    :return: An image.
-    """
-    exif = image.getexif()
-    orientation = exif.get(0x0112, 1)  # default 1
-    if orientation > 1:
-        method = {
-            2: Image.FLIP_LEFT_RIGHT,
-            3: Image.ROTATE_180,
-            4: Image.FLIP_TOP_BOTTOM,
-            5: Image.TRANSPOSE,
-            6: Image.ROTATE_270,
-            7: Image.TRANSVERSE,
-            8: Image.ROTATE_90}.get(orientation)
-        if method is not None:
-            image = image.transpose(method)
-            del exif[0x0112]
-            image.info['exif'] = exif.tobytes()
-    return image
 
 
 class LoadImages:
