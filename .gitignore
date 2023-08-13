@@ -5,7 +5,7 @@ coverage.xml
 video/*
 !video/.gitkeep
 
-.vscode/
+.vscode
 
 # 機械学習
 *.png

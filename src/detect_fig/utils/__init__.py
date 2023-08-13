@@ -30,7 +30,8 @@ class TryExcept(contextlib.ContextDecorator):
 def threaded(func):
     # Multi-threads a target function and returns thread. Usage: @threaded decorator
     def wrapper(*args, **kwargs):
-        thread = threading.Thread(target=func, args=args, kwargs=kwargs, daemon=True)
+        thread = threading.Thread(
+            target=func, args=args, kwargs=kwargs, daemon=True)
         thread.start()
         return thread
 
@@ -64,9 +65,11 @@ def notebook_init(verbose=True):
     import psutil
 
     if check_requirements('wandb', install=False):
-        os.system('pip uninstall -y wandb')  # eliminate unexpected account creation prompt with infinite hang
+        # eliminate unexpected account creation prompt with infinite hang
+        os.system('pip uninstall -y wandb')
     if is_colab():
-        shutil.rmtree('/content/sample_data', ignore_errors=True)  # remove colab /sample_data directory
+        # remove colab /sample_data directory
+        shutil.rmtree('/content/sample_data', ignore_errors=True)
 
     # System info
     display = None
@@ -74,7 +77,8 @@ def notebook_init(verbose=True):
         gb = 1 << 30  # bytes to GiB (1024 ** 3)
         ram = psutil.virtual_memory().total
         total, used, free = shutil.disk_usage('/')
-        with contextlib.suppress(Exception):  # clear display if ipython is installed
+        # clear display if ipython is installed
+        with contextlib.suppress(Exception):
             from IPython import display
             display.clear_output()
         s = f'({os.cpu_count()} CPUs, {ram / gb:.1f} GB RAM, {(total - free) / gb:.1f}/{total / gb:.1f} GB disk)'

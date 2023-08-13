@@ -92,14 +92,12 @@ def predict(
         pred = model(im, augment=False, visualize=False)
 
         """
-        non_max_suppression(): 非最大値抑制を実行する関数
         pred: 物体検出結果
         conf_thres: 信頼度の閾値
         iou_thres: IoUの閾値
         classes: 検出するクラスのリスト
         agnostic_nms: NMS(Non-Maximum Suppression)を適用するか
         max_det: 最大検出数
-        len(pred): 1
         """
         # NMS(Non-Maximum Suppression)関数
         # 重なりのある複数の物体検出結果をフィルタリング
