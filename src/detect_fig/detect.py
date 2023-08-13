@@ -116,29 +116,33 @@ def run(
     # Run inference
     model.warmup(imgsz=(1 if pt or model.triton else bs, 3, *imgsz))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
+    print("dt", dt)
 
     """初回ループの出力
     path: /home/kawano/etrobocon2023-camera-system/src/detect_fig/verification_data/image1.png
-    im.shape: (3, 640, 640)
-    im0s.shape: (640, 640, 3)
+    im:画像データのNumPy配列 (3, 640, 640)
+    im0s: オリジナルの画像データ(640, 640, 3)
     vid_cap: None
     s: image 1/36 /home/kawano/etrobocon2023-camera-system/src/detect_fig/verification_data/image1.png: 
     """
-    i = 0
     for path, im, im0s, vid_cap, s in dataset:
-        if i is 0:
-            print("path:", path)
-            print("im", im.shape)
-            print("im0s,", im0s.shape)
-            print("vid_cap", vid_cap)
-            print("s", s)
-            i = 1
+        # dt[0]: オリジナルの画像データ
         with dt[0]:
+            # PyTorchのテンソルに変換
             im = torch.from_numpy(im).to(model.device)
+
+            # model.fp16がTrueの場合は、テンソルを半精度浮動小数点数（float16）に変換
+            # そうでない場合は、単精度浮動小数点数（float32）に変換
             im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
+
+            # テンソルの値を0から255の範囲から0.0から1.0の範囲にスケーリング
             im /= 255  # 0 - 255 to 0.0 - 1.0
+
+            # もしimの形状が3次元（例：[3, 640, 640]）の場合、バッチ次元を追加して4次元のテンソルに変換
+            # これは、モデルに複数の画像を一度に処理させるための操作
             if len(im.shape) == 3:
-                im = im[None]  # expand for batch dim
+                # expand for batch dim torch.Size([3, 640, 640]) >> torch.Size([1, 3, 640, 640])
+                im = im[None]
 
     """
         # Inference
