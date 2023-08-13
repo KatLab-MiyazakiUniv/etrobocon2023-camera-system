@@ -18,10 +18,13 @@ from urllib.parse import urlparse
 import cv2
 import numpy as np
 import pandas as pd
+import requests
 import torch
 import torch.nn as nn
 from PIL import Image
+from torch.cuda import amp
 
+# Import 'ultralytics' package or install if if missing
 try:
     import ultralytics
 
@@ -36,8 +39,11 @@ except (ImportError, AssertionError):
 from ultralytics.utils.plotting import Annotator, colors, save_one_box
 
 from utils import TryExcept
-from utils.general import (LOGGER, ROOT, check_requirements, check_suffix, check_version, colorstr,
-                           increment_path, is_jupyter, xywh2xyxy, xyxy2xywh, yaml_load)
+from utils.dataloaders import exif_transpose, letterbox
+from utils.general import (LOGGER, ROOT, Profile, check_requirements, check_suffix, check_version, colorstr,
+                           increment_path, is_jupyter, make_divisible, non_max_suppression, scale_boxes, xywh2xyxy,
+                           xyxy2xywh, yaml_load)
+from utils.torch_utils import copy_attr, smart_inference_mode
 
 
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
@@ -76,6 +82,50 @@ class DWConv(Conv):
         super().__init__(c1, c2, k, s, g=math.gcd(c1, c2), d=d, act=act)
 
 
+class DWConvTranspose2d(nn.ConvTranspose2d):
+    # Depth-wise transpose convolution
+    # ch_in, ch_out, kernel, stride, padding, padding_out
+    def __init__(self, c1, c2, k=1, s=1, p1=0, p2=0):
+        super().__init__(c1, c2, k, s, p1, p2, groups=math.gcd(c1, c2))
+
+
+class TransformerLayer(nn.Module):
+    # Transformer layer https://arxiv.org/abs/2010.11929 (LayerNorm layers removed for better performance)
+    def __init__(self, c, num_heads):
+        super().__init__()
+        self.q = nn.Linear(c, c, bias=False)
+        self.k = nn.Linear(c, c, bias=False)
+        self.v = nn.Linear(c, c, bias=False)
+        self.ma = nn.MultiheadAttention(embed_dim=c, num_heads=num_heads)
+        self.fc1 = nn.Linear(c, c, bias=False)
+        self.fc2 = nn.Linear(c, c, bias=False)
+
+    def forward(self, x):
+        x = self.ma(self.q(x), self.k(x), self.v(x))[0] + x
+        x = self.fc2(self.fc1(x)) + x
+        return x
+
+
+class TransformerBlock(nn.Module):
+    # Vision Transformer https://arxiv.org/abs/2010.11929
+    def __init__(self, c1, c2, num_heads, num_layers):
+        super().__init__()
+        self.conv = None
+        if c1 != c2:
+            self.conv = Conv(c1, c2)
+        self.linear = nn.Linear(c2, c2)  # learnable position embedding
+        self.tr = nn.Sequential(*(TransformerLayer(c2, num_heads)
+                                for _ in range(num_layers)))
+        self.c2 = c2
+
+    def forward(self, x):
+        if self.conv is not None:
+            x = self.conv(x)
+        b, _, w, h = x.shape
+        p = x.flatten(2).permute(2, 0, 1)
+        return self.tr(p + self.linear(p)).permute(1, 2, 0).reshape(b, self.c2, w, h)
+
+
 class Bottleneck(nn.Module):
     # Standard bottleneck
     # ch_in, ch_out, shortcut, groups, expansion
@@ -84,6 +134,41 @@ class Bottleneck(nn.Module):
         c_ = int(c2 * e)  # hidden channels
         self.cv1 = Conv(c1, c_, 1, 1)
         self.cv2 = Conv(c_, c2, 3, 1, g=g)
+        self.add = shortcut and c1 == c2
+
+    def forward(self, x):
+        return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
+
+
+class BottleneckCSP(nn.Module):
+    # CSP Bottleneck https://github.com/WongKinYiu/CrossStagePartialNetworks
+    # ch_in, ch_out, number, shortcut, groups, expansion
+    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
+        super().__init__()
+        c_ = int(c2 * e)  # hidden channels
+        self.cv1 = Conv(c1, c_, 1, 1)
+        self.cv2 = nn.Conv2d(c1, c_, 1, 1, bias=False)
+        self.cv3 = nn.Conv2d(c_, c_, 1, 1, bias=False)
+        self.cv4 = Conv(2 * c_, c2, 1, 1)
+        self.bn = nn.BatchNorm2d(2 * c_)  # applied to cat(cv2, cv3)
+        self.act = nn.SiLU()
+        self.m = nn.Sequential(
+            *(Bottleneck(c_, c_, shortcut, g, e=1.0) for _ in range(n)))
+
+    def forward(self, x):
+        y1 = self.cv3(self.m(self.cv1(x)))
+        y2 = self.cv2(x)
+        return self.cv4(self.act(self.bn(torch.cat((y1, y2), 1))))
+
+
+class CrossConv(nn.Module):
+    # Cross Convolution Downsample
+    def __init__(self, c1, c2, k=3, s=1, g=1, e=1.0, shortcut=False):
+        # ch_in, ch_out, kernel, stride, groups, expansion, shortcut
+        super().__init__()
+        c_ = int(c2 * e)  # hidden channels
+        self.cv1 = Conv(c1, c_, (1, k), (1, s))
+        self.cv2 = Conv(c_, c2, (k, 1), (s, 1), g=g)
         self.add = shortcut and c1 == c2
 
     def forward(self, x):
@@ -104,6 +189,39 @@ class C3(nn.Module):
 
     def forward(self, x):
         return self.cv3(torch.cat((self.m(self.cv1(x)), self.cv2(x)), 1))
+
+
+class C3x(C3):
+    # C3 module with cross-convolutions
+    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
+        super().__init__(c1, c2, n, shortcut, g, e)
+        c_ = int(c2 * e)
+        self.m = nn.Sequential(
+            *(CrossConv(c_, c_, 3, 1, g, 1.0, shortcut) for _ in range(n)))
+
+
+class C3TR(C3):
+    # C3 module with TransformerBlock()
+    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
+        super().__init__(c1, c2, n, shortcut, g, e)
+        c_ = int(c2 * e)
+        self.m = TransformerBlock(c_, c_, 4, n)
+
+
+class C3SPP(C3):
+    # C3 module with SPP()
+    def __init__(self, c1, c2, k=(5, 9, 13), n=1, shortcut=True, g=1, e=0.5):
+        super().__init__(c1, c2, n, shortcut, g, e)
+        c_ = int(c2 * e)
+        self.m = SPP(c_, c_, k)
+
+
+class C3Ghost(C3):
+    # C3 module with GhostBottleneck()
+    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5):
+        super().__init__(c1, c2, n, shortcut, g, e)
+        c_ = int(c2 * e)  # hidden channels
+        self.m = nn.Sequential(*(GhostBottleneck(c_, c_) for _ in range(n)))
 
 
 class SPP(nn.Module):
@@ -141,6 +259,77 @@ class SPPF(nn.Module):
             y1 = self.m(x)
             y2 = self.m(y1)
             return self.cv2(torch.cat((x, y1, y2, self.m(y2)), 1))
+
+
+class Focus(nn.Module):
+    # Focus wh information into c-space
+    # ch_in, ch_out, kernel, stride, padding, groups
+    def __init__(self, c1, c2, k=1, s=1, p=None, g=1, act=True):
+        super().__init__()
+        self.conv = Conv(c1 * 4, c2, k, s, p, g, act=act)
+        # self.contract = Contract(gain=2)
+
+    def forward(self, x):  # x(b,c,w,h) -> y(b,4c,w/2,h/2)
+        return self.conv(torch.cat((x[..., ::2, ::2], x[..., 1::2, ::2], x[..., ::2, 1::2], x[..., 1::2, 1::2]), 1))
+        # return self.conv(self.contract(x))
+
+
+class GhostConv(nn.Module):
+    # Ghost Convolution https://github.com/huawei-noah/ghostnet
+    # ch_in, ch_out, kernel, stride, groups
+    def __init__(self, c1, c2, k=1, s=1, g=1, act=True):
+        super().__init__()
+        c_ = c2 // 2  # hidden channels
+        self.cv1 = Conv(c1, c_, k, s, None, g, act=act)
+        self.cv2 = Conv(c_, c_, 5, 1, None, c_, act=act)
+
+    def forward(self, x):
+        y = self.cv1(x)
+        return torch.cat((y, self.cv2(y)), 1)
+
+
+class GhostBottleneck(nn.Module):
+    # Ghost Bottleneck https://github.com/huawei-noah/ghostnet
+    def __init__(self, c1, c2, k=3, s=1):  # ch_in, ch_out, kernel, stride
+        super().__init__()
+        c_ = c2 // 2
+        self.conv = nn.Sequential(
+            GhostConv(c1, c_, 1, 1),  # pw
+            DWConv(c_, c_, k, s, act=False) if s == 2 else nn.Identity(),  # dw
+            GhostConv(c_, c2, 1, 1, act=False))  # pw-linear
+        self.shortcut = nn.Sequential(DWConv(c1, c1, k, s, act=False), Conv(c1, c2, 1, 1,
+                                                                            act=False)) if s == 2 else nn.Identity()
+
+    def forward(self, x):
+        return self.conv(x) + self.shortcut(x)
+
+
+class Contract(nn.Module):
+    # Contract width-height into channels, i.e. x(1,64,80,80) to x(1,256,40,40)
+    def __init__(self, gain=2):
+        super().__init__()
+        self.gain = gain
+
+    def forward(self, x):
+        b, c, h, w = x.size()  # assert (h / s == 0) and (W / s == 0), 'Indivisible gain'
+        s = self.gain
+        x = x.view(b, c, h // s, s, w // s, s)  # x(1,64,40,2,40,2)
+        x = x.permute(0, 3, 5, 1, 2, 4).contiguous()  # x(1,2,2,64,40,40)
+        return x.view(b, c * s * s, h // s, w // s)  # x(1,256,40,40)
+
+
+class Expand(nn.Module):
+    # Expand channels into width-height, i.e. x(1,64,80,80) to x(1,16,160,160)
+    def __init__(self, gain=2):
+        super().__init__()
+        self.gain = gain
+
+    def forward(self, x):
+        b, c, h, w = x.size()  # assert C / s ** 2 == 0, 'Indivisible gain'
+        s = self.gain
+        x = x.view(b, s, s, c // s ** 2, h, w)  # x(1,2,2,16,80,80)
+        x = x.permute(0, 3, 4, 1, 5, 2).contiguous()  # x(1,16,80,2,80,2)
+        return x.view(b, c // s ** 2, h * s, w * s)  # x(1,16,160,160)
 
 
 class Concat(nn.Module):
@@ -510,6 +699,122 @@ class DetectMultiBackend(nn.Module):
         return None, None
 
 
+class AutoShape(nn.Module):
+    # YOLOv5 input-robust model wrapper for passing cv2/np/PIL/torch inputs. Includes preprocessing, inference and NMS
+    conf = 0.25  # NMS confidence threshold
+    iou = 0.45  # NMS IoU threshold
+    agnostic = False  # NMS class-agnostic
+    multi_label = False  # NMS multiple labels per box
+    # (optional list) filter by class, i.e. = [0, 15, 16] for COCO persons, cats and dogs
+    classes = None
+    max_det = 1000  # maximum number of detections per image
+    amp = False  # Automatic Mixed Precision (AMP) inference
+
+    def __init__(self, model, verbose=True):
+        super().__init__()
+        if verbose:
+            LOGGER.info('Adding AutoShape... ')
+        copy_attr(self, model, include=('yaml', 'nc', 'hyp', 'names',
+                  'stride', 'abc'), exclude=())  # copy attributes
+        # DetectMultiBackend() instance
+        self.dmb = isinstance(model, DetectMultiBackend)
+        self.pt = not self.dmb or model.pt  # PyTorch model
+        self.model = model.eval()
+        if self.pt:
+            # Detect()
+            m = self.model.model.model[-1] if self.dmb else self.model.model[-1]
+            m.inplace = False  # Detect.inplace=False for safe multithread inference
+            m.export = True  # do not output loss values
+
+    def _apply(self, fn):
+        # Apply to(), cpu(), cuda(), half() to model tensors that are not parameters or registered buffers
+        self = super()._apply(fn)
+        if self.pt:
+            # Detect()
+            m = self.model.model.model[-1] if self.dmb else self.model.model[-1]
+            m.stride = fn(m.stride)
+            m.grid = list(map(fn, m.grid))
+            if isinstance(m.anchor_grid, list):
+                m.anchor_grid = list(map(fn, m.anchor_grid))
+        return self
+
+    @smart_inference_mode()
+    def forward(self, ims, size=640, augment=False, profile=False):
+        # Inference from various sources. For size(height=640, width=1280), RGB images example inputs are:
+        #   file:        ims = 'data/images/zidane.jpg'  # str or PosixPath
+        #   URI:             = 'https://ultralytics.com/images/zidane.jpg'
+        #   OpenCV:          = cv2.imread('image.jpg')[:,:,::-1]  # HWC BGR to RGB x(640,1280,3)
+        #   PIL:             = Image.open('image.jpg') or ImageGrab.grab()  # HWC x(640,1280,3)
+        #   numpy:           = np.zeros((640,1280,3))  # HWC
+        #   torch:           = torch.zeros(16,3,320,640)  # BCHW (scaled to size=640, 0-1 values)
+        #   multiple:        = [Image.open('image1.jpg'), Image.open('image2.jpg'), ...]  # list of images
+
+        dt = (Profile(), Profile(), Profile())
+        with dt[0]:
+            if isinstance(size, int):  # expand
+                size = (size, size)
+            p = next(self.model.parameters()) if self.pt else torch.empty(
+                1, device=self.model.device)  # param
+            # Automatic Mixed Precision (AMP) inference
+            autocast = self.amp and (p.device.type != 'cpu')
+            if isinstance(ims, torch.Tensor):  # torch
+                with amp.autocast(autocast):
+                    # inference
+                    return self.model(ims.to(p.device).type_as(p), augment=augment)
+
+            # Pre-process
+            n, ims = (len(ims), list(ims)) if isinstance(
+                ims, (list, tuple)) else (1, [ims])  # number, list of images
+            shape0, shape1, files = [], [], []  # image and inference shapes, filenames
+            for i, im in enumerate(ims):
+                f = f'image{i}'  # filename
+                if isinstance(im, (str, Path)):  # filename or uri
+                    im, f = Image.open(requests.get(im, stream=True).raw if str(
+                        im).startswith('http') else im), im
+                    im = np.asarray(exif_transpose(im))
+                elif isinstance(im, Image.Image):  # PIL Image
+                    im, f = np.asarray(exif_transpose(im)), getattr(
+                        im, 'filename', f) or f
+                files.append(Path(f).with_suffix('.jpg').name)
+                if im.shape[0] < 5:  # image in CHW
+                    # reverse dataloader .transpose(2, 0, 1)
+                    im = im.transpose((1, 2, 0))
+                im = im[..., :3] if im.ndim == 3 else cv2.cvtColor(
+                    im, cv2.COLOR_GRAY2BGR)  # enforce 3ch input
+                s = im.shape[:2]  # HWC
+                shape0.append(s)  # image shape
+                g = max(size) / max(s)  # gain
+                shape1.append([int(y * g) for y in s])
+                ims[i] = im if im.data.contiguous else np.ascontiguousarray(
+                    im)  # update
+            shape1 = [make_divisible(x, self.stride)
+                      for x in np.array(shape1).max(0)]  # inf shape
+            x = [letterbox(im, shape1, auto=False)[0] for im in ims]  # pad
+            x = np.ascontiguousarray(np.array(x).transpose(
+                (0, 3, 1, 2)))  # stack and BHWC to BCHW
+            x = torch.from_numpy(x).to(p.device).type_as(
+                p) / 255  # uint8 to fp16/32
+
+        with amp.autocast(autocast):
+            # Inference
+            with dt[1]:
+                y = self.model(x, augment=augment)  # forward
+
+            # Post-process
+            with dt[2]:
+                y = non_max_suppression(y if self.dmb else y[0],
+                                        self.conf,
+                                        self.iou,
+                                        self.classes,
+                                        self.agnostic,
+                                        self.multi_label,
+                                        max_det=self.max_det)  # NMS
+                for i in range(n):
+                    scale_boxes(shape1, y[i][:, :4], shape0[i])
+
+            return Detections(ims, y, files, dt, self.names, x.shape)
+
+
 class Detections:
     # YOLOv5 detections class for inference results
     def __init__(self, ims, pred, files, times=(0, 0, 0), names=None, shape=None):
@@ -638,3 +943,39 @@ class Detections:
 
     def __repr__(self):
         return f'YOLOv5 {self.__class__} instance\n' + self.__str__()
+
+
+class Proto(nn.Module):
+    # YOLOv5 mask Proto module for segmentation models
+    def __init__(self, c1, c_=256, c2=32):  # ch_in, number of protos, number of masks
+        super().__init__()
+        self.cv1 = Conv(c1, c_, k=3)
+        self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
+        self.cv2 = Conv(c_, c_, k=3)
+        self.cv3 = Conv(c_, c2)
+
+    def forward(self, x):
+        return self.cv3(self.cv2(self.upsample(self.cv1(x))))
+
+
+class Classify(nn.Module):
+    # YOLOv5 classification head, i.e. x(b,c1,20,20) to x(b,c2)
+    def __init__(self,
+                 c1,
+                 c2,
+                 k=1,
+                 s=1,
+                 p=None,
+                 g=1,
+                 dropout_p=0.0):  # ch_in, ch_out, kernel, stride, padding, groups, dropout probability
+        super().__init__()
+        c_ = 1280  # efficientnet_b0 size
+        self.conv = Conv(c1, c_, k, s, autopad(k, p), g)
+        self.pool = nn.AdaptiveAvgPool2d(1)  # to x(b,c_,1,1)
+        self.drop = nn.Dropout(p=dropout_p, inplace=True)
+        self.linear = nn.Linear(c_, c2)  # to x(b,c2)
+
+    def forward(self, x):
+        if isinstance(x, list):
+            x = torch.cat(x, 1)
+        return self.linear(self.drop(self.pool(self.conv(x)).flatten(1)))
