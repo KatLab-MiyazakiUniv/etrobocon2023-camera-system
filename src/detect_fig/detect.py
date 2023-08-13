@@ -1,4 +1,4 @@
-from utils.torch_utils import select_device, smart_inference_mode
+from utils.torch_utils import select_device, smart_inference_mode  # OK
 from utils.general import (
     check_img_size, cv2, non_max_suppression, scale_boxes)
 from utils.dataloaders import LoadImages
