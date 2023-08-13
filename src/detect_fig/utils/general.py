@@ -88,11 +88,6 @@ def is_ascii(s=''):
     return len(s.encode().decode('ascii', 'ignore')) == len(s)
 
 
-def is_colab():
-    # Is environment a Google Colab instance?
-    return 'google.colab' in sys.modules
-
-
 def is_jupyter():
     """
     Check if the current script is running inside a Jupyter Notebook.
