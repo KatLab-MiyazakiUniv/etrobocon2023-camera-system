@@ -3,22 +3,15 @@
 General utils
 """
 
-import contextlib
-import glob
 import inspect
 import logging
 import logging.config
 import math
 import os
 import platform
-# import random
-# import re
-# import signal
 import subprocess
-import sys
 import time
 import urllib
-# from copy import deepcopy
 from datetime import datetime
 from itertools import repeat
 from multiprocessing.pool import ThreadPool
@@ -80,42 +73,6 @@ os.environ['OMP_NUM_THREADS'] = '1' if platform.system(
 ) == 'darwin' else str(NUM_THREADS)  # OpenMP (PyTorch and SciPy)
 # suppress verbose TF compiler warnings in Colab
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
-
-def is_ascii(s=''):
-    # Is string composed of all ASCII (no UTF) characters? (note str().isascii() introduced in python 3.7)
-    s = str(s)  # convert list, tuple, None, etc. to str
-    return len(s.encode().decode('ascii', 'ignore')) == len(s)
-
-
-def is_jupyter():
-    """
-    Check if the current script is running inside a Jupyter Notebook.
-    Verified on Colab, Jupyterlab, Kaggle, Paperspace.
-
-    Returns:
-        bool: True if running inside a Jupyter Notebook, False otherwise.
-    """
-    with contextlib.suppress(Exception):
-        from IPython import get_ipython
-        return get_ipython() is not None
-    return False
-
-
-def is_kaggle():
-    # Is environment a Kaggle Notebook?
-    return os.environ.get('PWD') == '/kaggle/working' and os.environ.get('KAGGLE_URL_BASE') == 'https://www.kaggle.com'
-
-
-def is_docker() -> bool:
-    """Check if the process runs inside a docker container."""
-    if Path('/.dockerenv').exists():
-        return True
-    try:  # check if docker is in control groups
-        with open('/proc/self/cgroup') as file:
-            return any('docker' in line for line in file)
-    except OSError:
-        return False
 
 
 def is_writeable(dir, test=False):
@@ -184,39 +141,6 @@ def user_config_dir(dir='Ultralytics', env_var='YOLOV5_CONFIG_DIR'):
 CONFIG_DIR = user_config_dir()  # Ultralytics settings dir
 
 
-class Profile(contextlib.ContextDecorator):
-    # YOLOv5 Profile class. Usage: @Profile() decorator or 'with Profile():' context manager
-    def __init__(self, t=0.0):
-        self.t = t
-        self.cuda = torch.cuda.is_available()
-
-    def __enter__(self):
-        self.start = self.time()
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.dt = self.time() - self.start  # delta-time
-        self.t += self.dt  # accumulate dt
-
-    def time(self):
-        if self.cuda:
-            torch.cuda.synchronize()
-        return time.time()
-
-
-class WorkingDirectory(contextlib.ContextDecorator):
-    # Usage: @WorkingDirectory(dir) decorator or 'with WorkingDirectory(dir):' context manager
-    def __init__(self, new_dir):
-        self.dir = new_dir  # new dir
-        self.cwd = Path.cwd().resolve()  # current dir
-
-    def __enter__(self):
-        os.chdir(self.dir)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        os.chdir(self.cwd)
-
-
 def print_args(args: Optional[dict] = None, show_file=True, show_func=False):
     # Print function arguments (optional args dict)
     x = inspect.currentframe().f_back  # previous frame
@@ -232,45 +156,10 @@ def print_args(args: Optional[dict] = None, show_file=True, show_func=False):
     LOGGER.info(colorstr(s) + ', '.join(f'{k}={v}' for k, v in args.items()))
 
 
-def get_default_args(func):
-    # Get func() default arguments
-    signature = inspect.signature(func)
-    return {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
-
-
 def file_date(path=__file__):
     # Return human-readable file modification date, i.e. '2021-3-26'
     t = datetime.fromtimestamp(Path(path).stat().st_mtime)
     return f'{t.year}-{t.month}-{t.day}'
-
-
-def file_size(path):
-    # Return file/dir size (MB)
-    mb = 1 << 20  # bytes to MiB (1024 ** 2)
-    path = Path(path)
-    if path.is_file():
-        return path.stat().st_size / mb
-    elif path.is_dir():
-        return sum(f.stat().st_size for f in path.glob('**/*') if f.is_file()) / mb
-    else:
-        return 0.0
-
-
-def check_online():
-    # Check internet connectivity
-    import socket
-
-    def run_once():
-        # Check once
-        try:
-            # check host accessibility
-            socket.create_connection(('1.1.1.1', 443), 5)
-            return True
-        except OSError:
-            return False
-
-    # check twice to increase robustness to intermittent connectivity issues
-    return run_once() or run_once()
 
 
 def git_describe(path=ROOT):  # path must be a directory
@@ -324,38 +213,38 @@ def check_yaml(file, suffix=('.yaml', '.yml')):
     return check_file(file, suffix)
 
 
-def check_file(file, suffix=''):
-    # Search/download file (if necessary) and return path
-    check_suffix(file, suffix)  # optional
-    file = str(file)  # convert to str()
-    if os.path.isfile(file) or not file:  # exists
-        return file
-    elif file.startswith(('http:/', 'https:/')):  # download
-        url = file  # warning: Pathlib turns :// -> :/
-        # '%2F' to '/', split https://url.com/file.txt?auth
-        file = Path(urllib.parse.unquote(file).split('?')[0]).name
-        if os.path.isfile(file):
-            # file already exists
-            LOGGER.info(f'Found {url} locally at {file}')
-        else:
-            LOGGER.info(f'Downloading {url} to {file}...')
-            torch.hub.download_url_to_file(url, file)
-            assert Path(file).exists() and Path(file).stat(
-            ).st_size > 0, f'File download failed: {url}'  # check
-        return file
-    elif file.startswith('clearml://'):  # ClearML Dataset ID
-        assert 'clearml' in sys.modules, "ClearML is not installed, so cannot use ClearML dataset. Try running 'pip install clearml'."
-        return file
-    else:  # search
-        files = []
-        for d in 'data', 'models', 'utils':  # search directories
-            files.extend(glob.glob(str(ROOT / d / '**' / file),
-                         recursive=True))  # find file
-        assert len(files), f'File not found: {file}'  # assert file was found
-        # assert unique
-        assert len(
-            files) == 1, f"Multiple files match '{file}', specify exact path: {files}"
-        return files[0]  # return file
+# def check_file(file, suffix=''):
+#     # Search/download file (if necessary) and return path
+#     check_suffix(file, suffix)  # optional
+#     file = str(file)  # convert to str()
+#     if os.path.isfile(file) or not file:  # exists
+#         return file
+#     elif file.startswith(('http:/', 'https:/')):  # download
+#         url = file  # warning: Pathlib turns :// -> :/
+#         # '%2F' to '/', split https://url.com/file.txt?auth
+#         file = Path(urllib.parse.unquote(file).split('?')[0]).name
+#         if os.path.isfile(file):
+#             # file already exists
+#             LOGGER.info(f'Found {url} locally at {file}')
+#         else:
+#             LOGGER.info(f'Downloading {url} to {file}...')
+#             torch.hub.download_url_to_file(url, file)
+#             assert Path(file).exists() and Path(file).stat(
+#             ).st_size > 0, f'File download failed: {url}'  # check
+#         return file
+#     elif file.startswith('clearml://'):  # ClearML Dataset ID
+#         assert 'clearml' in sys.modules, "ClearML is not installed, so cannot use ClearML dataset. Try running 'pip install clearml'."
+#         return file
+#     else:  # search
+#         files = []
+#         for d in 'data', 'models', 'utils':  # search directories
+#             files.extend(glob.glob(str(ROOT / d / '**' / file),
+#                          recursive=True))  # find file
+#         assert len(files), f'File not found: {file}'  # assert file was found
+#         # assert unique
+#         assert len(
+#             files) == 1, f"Multiple files match '{file}', specify exact path: {files}"
+#         return files[0]  # return file
 
 
 def check_font(font=FONT, progress=False):
