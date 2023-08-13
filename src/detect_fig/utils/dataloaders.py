@@ -3,41 +3,15 @@
 Dataloaders and dataset utils
 """
 
-# import contextlib
 import glob
-# import hashlib
-# import json
-# import math
 import os
-# import random
-# import shutil
-# import time
-# from itertools import repeat
-# from multiprocessing.pool import Pool, ThreadPool
 from pathlib import Path
-# from threading import Thread
-# from urllib.parse import urlparse
 
 import numpy as np
-# import psutil
-# import torch
-# import torch.nn.functional as F
-# import torchvision
-# import yaml
-# from PIL import ExifTags, Image, ImageOps
-from PIL import ExifTags, Image
-# from torch.utils.data import DataLoader, Dataset, dataloader, distributed
-# from tqdm import tqdm
+from PIL import Image
 
 from utils.augmentations import letterbox
-# from utils.augmentations import (Albumentations, augment_hsv, classify_albumentations, classify_transforms, copy_paste,
-#                                  letterbox, mixup, random_perspective)
-# from utils.general import cv2
 import cv2
-# from utils.general import (DATASETS_DIR, LOGGER, NUM_THREADS, TQDM_BAR_FORMAT, check_dataset, check_requirements,
-#                            check_yaml, clean_str, cv2, is_colab, is_kaggle, segments2boxes, unzip_file, xyn2xy,
-#                            xywh2xyxy, xywhn2xyxy, xyxy2xywhn)
-# from utils.torch_utils import torch_distributed_zero_first
 
 # Parameters
 HELP_URL = 'See https://docs.ultralytics.com/yolov5/tutorials/train_custom_data'
@@ -50,11 +24,6 @@ LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))
 RANK = int(os.getenv('RANK', -1))
 PIN_MEMORY = str(os.getenv('PIN_MEMORY', True)).lower(
 ) == 'true'  # global pin_memory for dataloaders
-
-# Get orientation exif tag
-for orientation in ExifTags.TAGS.keys():
-    if ExifTags.TAGS[orientation] == 'Orientation':
-        break
 
 
 def exif_transpose(image):
