@@ -5,7 +5,7 @@ help:
 	@echo " $$ make rm"
 
 predict:
-	python detect.py --data data/data.yaml --weight runs/train/exp/weights/best.pt --source verification_data/ --imgsz 640 --device cpu
+	python detect.py --weight runs/train/exp/weights/best.pt --source verification_data/ --imgsz 640
 
 rm:
 	rm -rf runs/detect/
