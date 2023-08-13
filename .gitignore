@@ -11,6 +11,7 @@ video/*
 *.png
 *.jpg
 *.txt
+!requirements.txt
 verification_data/
 data/
 images640/
