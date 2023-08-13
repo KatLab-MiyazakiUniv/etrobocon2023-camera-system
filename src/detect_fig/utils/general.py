@@ -12,7 +12,7 @@ import math
 import os
 import platform
 # import random
-import re
+# import re
 # import signal
 import subprocess
 import sys
@@ -48,7 +48,8 @@ except (ImportError, AssertionError):
 
 from ultralytics.utils.checks import check_requirements
 
-from utils import TryExcept, emojis
+# from utils import TryExcept, emojis
+from utils import emojis
 from utils.downloads import curl_download, gsutil_getsize
 from utils.metrics import box_iou, fitness
 
@@ -85,11 +86,6 @@ def is_ascii(s=''):
     # Is string composed of all ASCII (no UTF) characters? (note str().isascii() introduced in python 3.7)
     s = str(s)  # convert list, tuple, None, etc. to str
     return len(s.encode().decode('ascii', 'ignore')) == len(s)
-
-
-# def is_chinese(s='人工智能'):
-#     # Is string composed of any Chinese characters?
-#     return bool(re.search('[\u4e00-\u9fff]', str(s)))
 
 
 def is_colab():
@@ -213,30 +209,6 @@ class Profile(contextlib.ContextDecorator):
         return time.time()
 
 
-# class Timeout(contextlib.ContextDecorator):
-#     # YOLOv5 Timeout class. Usage: @Timeout(seconds) decorator or 'with Timeout(seconds):' context manager
-#     def __init__(self, seconds, *, timeout_msg='', suppress_timeout_errors=True):
-#         self.seconds = int(seconds)
-#         self.timeout_message = timeout_msg
-#         self.suppress = bool(suppress_timeout_errors)
-
-#     def _timeout_handler(self, signum, frame):
-#         raise TimeoutError(self.timeout_message)
-
-#     def __enter__(self):
-#         if platform.system() != 'Windows':  # not supported on Windows
-#             # Set handler for SIGALRM
-#             signal.signal(signal.SIGALRM, self._timeout_handler)
-#             # start countdown for SIGALRM to be raised
-#             signal.alarm(self.seconds)
-
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         if platform.system() != 'Windows':
-#             signal.alarm(0)  # Cancel SIGALRM if it's scheduled
-#             if self.suppress and exc_type is TimeoutError:  # Suppress TimeoutError
-#                 return True
-
-
 class WorkingDirectory(contextlib.ContextDecorator):
     # Usage: @WorkingDirectory(dir) decorator or 'with WorkingDirectory(dir):' context manager
     def __init__(self, new_dir):
@@ -248,11 +220,6 @@ class WorkingDirectory(contextlib.ContextDecorator):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         os.chdir(self.cwd)
-
-
-# def methods(instance):
-#     # Get class/instance methods
-#     return [f for f in dir(instance) if callable(getattr(instance, f)) and not f.startswith('__')]
 
 
 def print_args(args: Optional[dict] = None, show_file=True, show_func=False):
@@ -270,43 +237,10 @@ def print_args(args: Optional[dict] = None, show_file=True, show_func=False):
     LOGGER.info(colorstr(s) + ', '.join(f'{k}={v}' for k, v in args.items()))
 
 
-# def init_seeds(seed=0, deterministic=False):
-#     # Initialize random number generator (RNG) seeds https://pytorch.org/docs/stable/notes/randomness.html
-#     random.seed(seed)
-#     np.random.seed(seed)
-#     torch.manual_seed(seed)
-#     torch.cuda.manual_seed(seed)
-#     torch.cuda.manual_seed_all(seed)  # for Multi-GPU, exception safe
-#     # torch.backends.cudnn.benchmark = True  # AutoBatch problem https://github.com/ultralytics/yolov5/issues/9287
-#     # https://github.com/ultralytics/yolov5/pull/8213
-#     if deterministic and check_version(torch.__version__, '1.12.0'):
-#         torch.use_deterministic_algorithms(True)
-#         torch.backends.cudnn.deterministic = True
-#         os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
-#         os.environ['PYTHONHASHSEED'] = str(seed)
-
-
-# def intersect_dicts(da, db, exclude=()):
-#     # Dictionary intersection of matching keys and shapes, omitting 'exclude' keys, using da values
-#     return {k: v for k, v in da.items() if k in db and all(x not in k for x in exclude) and v.shape == db[k].shape}
-
-
 def get_default_args(func):
     # Get func() default arguments
     signature = inspect.signature(func)
     return {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
-
-
-# def get_latest_run(search_dir='.'):
-#     # Return path to most recent 'last.pt' in /runs (i.e. to --resume from)
-#     last_list = glob.glob(f'{search_dir}/**/last*.pt', recursive=True)
-#     return max(last_list, key=os.path.getctime) if last_list else ''
-
-
-# def file_age(path=__file__):
-#     # Return days since last file update
-#     dt = (datetime.now() - datetime.fromtimestamp(Path(path).stat().st_mtime))  # delta
-#     return dt.days  # + dt.seconds / 86400  # fractional days
 
 
 def file_date(path=__file__):
@@ -602,16 +536,6 @@ def make_divisible(x, divisor):
     return math.ceil(x / divisor) * divisor
 
 
-def clean_str(s):
-    # Cleans a string by replacing special characters with underscore _
-    return re.sub(pattern='[|@#!¡·$€%&()=?¿^*;:,¨´><+]', repl='_', string=s)
-
-
-# def one_cycle(y1=0.0, y2=1.0, steps=100):
-#     # lambda function for sinusoidal ramp from y1 to y2 https://arxiv.org/pdf/1812.01187.pdf
-#     return lambda x: ((1 - math.cos(x * math.pi / steps)) / 2) * (y2 - y1) + y1
-
-
 def colorstr(*input):
     # Colors a string https://en.wikipedia.org/wiki/ANSI_escape_code, i.e.  colorstr('blue', 'hello world')
     # color arguments, string
@@ -637,45 +561,6 @@ def colorstr(*input):
         'bold': '\033[1m',
         'underline': '\033[4m'}
     return ''.join(colors[x] for x in args) + f'{string}' + colors['end']
-
-
-# def labels_to_class_weights(labels, nc=80):
-#     # Get class weights (inverse frequency) from training labels
-#     if labels[0] is None:  # no labels loaded
-#         return torch.Tensor()
-
-#     labels = np.concatenate(labels, 0)  # labels.shape = (866643, 5) for COCO
-#     classes = labels[:, 0].astype(int)  # labels = [class xywh]
-#     weights = np.bincount(classes, minlength=nc)  # occurrences per class
-
-#     # Prepend gridpoint count (for uCE training)
-#     # gpi = ((320 / 32 * np.array([1, 2, 4])) ** 2 * 3).sum()  # gridpoints per image
-#     # weights = np.hstack([gpi * len(labels)  - weights.sum() * 9, weights * 9]) ** 0.5  # prepend gridpoints to start
-
-#     weights[weights == 0] = 1  # replace empty bins with 1
-#     weights = 1 / weights  # number of targets per class
-#     weights /= weights.sum()  # normalize
-#     return torch.from_numpy(weights).float()
-
-
-# def labels_to_image_weights(labels, nc=80, class_weights=np.ones(80)):
-#     # Produces image weights based on class_weights and image contents
-#     # Usage: index = random.choices(range(n), weights=image_weights, k=1)  # weighted image sample
-#     class_counts = np.array(
-#         [np.bincount(x[:, 0].astype(int), minlength=nc) for x in labels])
-#     return (class_weights.reshape(1, nc) * class_counts).sum(1)
-
-
-# def coco80_to_coco91_class():  # converts 80-index (val2014) to 91-index (paper)
-#     # https://tech.amikelive.com/node-718/what-object-categories-labels-are-in-coco-dataset/
-#     # a = np.loadtxt('data/coco.names', dtype='str', delimiter='\n')
-#     # b = np.loadtxt('data/coco_paper.names', dtype='str', delimiter='\n')
-#     # x1 = [list(a[i] == b).index(True) + 1 for i in range(80)]  # darknet to coco
-#     # x2 = [list(b[i] == a).index(True) if any(b[i] == a) else None for i in range(91)]  # coco to darknet
-#     return [
-#         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 31, 32, 33, 34,
-#         35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
-#         64, 65, 67, 70, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 84, 85, 86, 87, 88, 89, 90]
 
 
 def xyxy2xywh(x):
@@ -705,18 +590,6 @@ def xywhn2xyxy(x, w=640, h=640, padw=0, padh=0):
     y[..., 1] = h * (x[..., 1] - x[..., 3] / 2) + padh  # top left y
     y[..., 2] = w * (x[..., 0] + x[..., 2] / 2) + padw  # bottom right x
     y[..., 3] = h * (x[..., 1] + x[..., 3] / 2) + padh  # bottom right y
-    return y
-
-
-def xyxy2xywhn(x, w=640, h=640, clip=False, eps=0.0):
-    # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] normalized where xy1=top-left, xy2=bottom-right
-    if clip:
-        clip_boxes(x, (h - eps, w - eps))  # warning: inplace clip
-    y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    y[..., 0] = ((x[..., 0] + x[..., 2]) / 2) / w  # x center
-    y[..., 1] = ((x[..., 1] + x[..., 3]) / 2) / h  # y center
-    y[..., 2] = (x[..., 2] - x[..., 0]) / w  # width
-    y[..., 3] = (x[..., 3] - x[..., 1]) / h  # height
     return y
 
 

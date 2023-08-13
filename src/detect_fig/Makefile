@@ -13,3 +13,7 @@ predict:
 
 rm:
 	rm -rf detect_result/
+
+add:
+	git add .
+	git commit -m "update:ロボコン用に修正中"
