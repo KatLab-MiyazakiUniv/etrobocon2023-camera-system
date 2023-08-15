@@ -9,8 +9,8 @@ import requests
 class OfficialInterface:
     """IoT列車の操作を行うクラス."""
 
-    cls.SERVER_IP = "192.168.100.1"    # 競技システムのIPアドレス
-    cls.TEAM_ID = 63                   # チームID
+    SERVER_IP = "192.168.100.1"    # 競技システムのIPアドレス
+    TEAM_ID = 63                   # チームID
 
     @classmethod
     def set_train_pwm(cls, pwm) -> bool:

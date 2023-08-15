@@ -13,6 +13,7 @@ pydocstyle = "^6.3.0"
 coverage = "^7.2.7"
 datetime = "^5.2"
 opencv-python = "^4.8.0.74"
+requests = "^2.31.0"
 
 
 [tool.poetry.group.dev.dependencies]
