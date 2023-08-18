@@ -17,9 +17,10 @@ class TestOfficialInterface:
         OfficialInterface.set_train_pwm(pwm)
 
     @mock.patch("requests.post")
-    def test_uplode_snap(self, mock_post):
+    def test_upload_snap(self, mock_post):
         mock_response = mock.Mock(spec=Response)
         mock_response.status_code = 200
         mock_post.return_value = mock_response
         img_path = "tests/testdata/img/fig.png"
-        OfficialInterface.uplode_snap(img_path)
+        resized_img_path = "tests/testdata/img/resized_fig.png"
+        OfficialInterface.upload_snap(img_path, resized_img_path)

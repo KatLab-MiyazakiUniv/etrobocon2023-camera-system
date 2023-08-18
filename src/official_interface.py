@@ -4,7 +4,7 @@
 @author: miyashita64
 """
 import requests
-
+import cv2
 
 class OfficialInterface:
     """IoT列車の操作を行うクラス."""
@@ -34,11 +34,12 @@ class OfficialInterface:
         return success
 
     @classmethod
-    def uplode_snap(cls, img_path) -> bool:
+    def upload_snap(cls, img_path, resize_img_path) -> bool:
         """フィグ画像をアップロードする.
 
         Args:
             img_path (str): アップロードする画像のパス
+            resize_img_path (str): リサイズした画像を保存するパス
 
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
@@ -49,7 +50,8 @@ class OfficialInterface:
         }
 
         # 指定された画像をリクエストに含める
-        with open(img_path, "rb") as image_file:
+        cls.resize_img(img_path, resize_img_path, 640, 480)
+        with open(resize_img_path, "rb") as image_file:
             image_data = image_file.read()
         # チームIDをリクエストに含める
         params = {
@@ -62,3 +64,20 @@ class OfficialInterface:
         # レスポンスのステータスコードが200の場合、通信成功
         success = (response.status_code == 200)
         return success
+
+    @classmethod
+    def resize_img(cls, img_path, save_path, resize_w, resize_h) -> None:
+        """一枚の画像をリサイズ.
+
+        Args:
+            img_path (string): リサイズする画像のパス
+            save_path (string): リサイズした画像を保存するパス
+            resize_w (int): リサイズする画像の幅
+            resize_h (int): リサイズする画像の高さ
+        """
+        # 読み込み
+        img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+        height, width, _ = img.shape
+        # リサイズ
+        resized_img = cv2.resize(img, (resize_w, resize_h))
+        cv2.imwrite(save_path, resized_img)
