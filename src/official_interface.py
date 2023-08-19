@@ -22,15 +22,14 @@ class OfficialInterface:
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
         """
-        url = f"http://{cls.SERVER_IP}/train"
-        data = {
-            "pwm": pwm
-        }
-
-        # APIにリクエストを送信
-        response = requests.put(url, data=data)
-        # レスポンスのステータスコードが200の場合、通信成功
-        success = (response.status_code == 200)
+        try:
+            url = f"http://{cls.SERVER_IP}/train?pwm={pwm}"
+            # APIにリクエストを送信
+            response = requests.put(url)
+            # レスポンスのステータスコードが200の場合、通信成功
+            success = (response.status_code == 200)
+        except:
+            success = False
         return success
 
     @classmethod
@@ -44,25 +43,28 @@ class OfficialInterface:
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
         """
-        url = f"http://{cls.SERVER_IP}/snap"
-        headers = {
-            "Content-Type": "image/png"
-        }
+        try:
+            url = f"http://{cls.SERVER_IP}/snap"
+            headers = {
+                "Content-Type": "image/png"
+            }
 
-        # 指定された画像をリクエストに含める
-        cls.resize_img(img_path, resize_img_path, 640, 480)
-        with open(resize_img_path, "rb") as image_file:
-            image_data = image_file.read()
-        # チームIDをリクエストに含める
-        params = {
-            "id": cls.TEAM_ID
-        }
+            # 指定された画像をリクエストに含める
+            cls.resize_img(img_path, resize_img_path, 640, 480)
+            with open(resize_img_path, "rb") as image_file:
+                image_data = image_file.read()
+            # チームIDをリクエストに含める
+            params = {
+                "id": cls.TEAM_ID
+            }
 
-        # APIにリクエストを送信
-        response = requests.post(url, headers=headers,
-                                 data=image_data, params=params)
-        # レスポンスのステータスコードが200の場合、通信成功
-        success = (response.status_code == 200)
+            # APIにリクエストを送信
+            response = requests.post(url, headers=headers,
+                                    data=image_data, params=params)
+            # レスポンスのステータスコードが200の場合、通信成功
+            success = (response.status_code == 200)
+        except:
+            success = False
         return success
 
     @classmethod
