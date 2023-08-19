@@ -7,6 +7,7 @@
 import cv2
 import numpy as np
 from camera_interface import CameraInterface
+from official_interface import OfficialInterface
 
 
 class TrainTracker:
@@ -128,6 +129,8 @@ class TrainTracker:
                         # 列車の領域を赤く塗りつぶし
                         cv2.rectangle(mark_frame, train_rect_points[0],
                                       train_rect_points[1], (0, 0, 255), -1)
+                        # IoT列車を停止する
+                        OfficialInterface.set_train_pwm(0)
 
             # フレームの表示
             cv2.imshow("Frame", mark_frame)
