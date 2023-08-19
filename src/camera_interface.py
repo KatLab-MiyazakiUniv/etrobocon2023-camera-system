@@ -18,7 +18,7 @@ class CameraInterface:
         Args:
             camera_id (int): カメラID
         """
-        self.camera = cv2.VideoCapture(camera_id)
+        self.camera = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
         self.output_dir = "video/"
         self.video = None
         self.mark_video = None

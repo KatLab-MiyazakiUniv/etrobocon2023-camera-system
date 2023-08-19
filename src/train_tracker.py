@@ -130,7 +130,7 @@ class TrainTracker:
                         cv2.rectangle(mark_frame, train_rect_points[0],
                                       train_rect_points[1], (0, 0, 255), -1)
                         # IoT列車を停止する
-                        OfficialInterface.set_train_pwm(0)
+                        # OfficialInterface.set_train_pwm(0)
 
             # フレームの表示
             cv2.imshow("Frame", mark_frame)
