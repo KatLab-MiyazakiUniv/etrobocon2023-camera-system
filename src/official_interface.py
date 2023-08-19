@@ -22,9 +22,9 @@ class OfficialInterface:
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
         """
-        url = f"http://{cls.SERVER_IP}/train?pwm={pwm}"
+        url = f"http://{cls.SERVER_IP}/train"
         data = {
-            # "pwm": pwm
+            "pwm": f"{pwm}"
         }
 
         # APIにリクエストを送信
