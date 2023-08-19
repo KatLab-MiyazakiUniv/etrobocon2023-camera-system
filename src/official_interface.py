@@ -22,13 +22,10 @@ class OfficialInterface:
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
         """
-        url = f"http://{cls.SERVER_IP}/train"
-        data = {
-            "pwm": f"{pwm}"
-        }
+        url = f"http://{cls.SERVER_IP}/train?pwm={pwm}"
 
         # APIにリクエストを送信
-        response = requests.put(url, data=data)
+        response = requests.put(url)
         # レスポンスのステータスコードが200の場合、通信成功
         success = (response.status_code == 200)
         return success
