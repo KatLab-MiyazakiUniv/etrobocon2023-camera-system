@@ -22,7 +22,7 @@ from utils.augmentations import letterbox
 
 
 def exit_check(path):
-    """ファイル, ディレクトリが存在するかの確認パス"""
+    """ファイル, ディレクトリが存在するかの確認パス."""
     if not os.path.exists(path):
         print(f"Error: {path} does not exist.")
         sys.exit(1)
@@ -32,10 +32,10 @@ class Detect():
     """yolov5(物体検出)をロボコン用に編集したクラス."""
 
     DEVICE = 'cpu'
-    IMG_SIZE=(640, 480)
+    IMG_SIZE = (640, 480)
 
-    def __init__(self, 
-                 img_path = 'image.png',
+    def __init__(self,
+                 img_path='image.png',
                  weights='best.pt',
                  label_data='label_data.yaml',
                  conf_thres=0.25,
@@ -73,16 +73,13 @@ class Detect():
         Args:
             img_path: 画像パス
         Returns:
-            im: パディング処理を行った入力画像
-            im0: 入力画像 
+            pred: 予測結果
         """
         im0 = cv2.imread(self.img_path)  # BGR
-        if im0 is None:
-            return None, None
 
         # リサイズとパディング処理
         im = letterbox(im0, Detect.IMG_SIZE, stride=self.stride,
-                        auto=auto)[0]
+                       auto=auto)[0]
         # BGR -> RGB
         im = im.transpose((2, 0, 1))[::-1]
         # 連続したメモリ領域に変換
@@ -90,22 +87,25 @@ class Detect():
 
         return im, im0
 
-
     def predict(self, save_path=None):
         """物体の検出を行う関数.
+
         Args:
             save_path(str): 検出結果の画像保存パス
-                            Noneの場合、保存しない 
+                            Noneの場合、保存しない
         Returns:
             im: パディング処理を行った入力画像
-            im0: 入力画像 
+            im0: 入力画像
         """
         # cpuを指定
         device = select_device(Detect.DEVICE)
 
         # モデルの読み込み
-        model = DetectMultiBackend(
-            self.weights, device=device, dnn=False, data=self.label_data, fp16=False)
+        model = DetectMultiBackend(self.weights,
+                                   device=device,
+                                   dnn=False,
+                                   data=self.label_data,
+                                   fp16=False)
 
         stride, labels, pt = model.stride, model.names, model.pt
 
@@ -119,8 +119,8 @@ class Detect():
 
         # 画像の読み込み
         im, im0s = self.read_image()
-        
-        im = torch.from_numpy(im).to(model.device) # PyTorchのテンソルに変換
+
+        im = torch.from_numpy(im).to(model.device)  # PyTorchのテンソルに変換
         im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
 
         # スケーリング
@@ -134,14 +134,16 @@ class Detect():
         pred = model(im, augment=False, visualize=False)
 
         # 非最大値抑制 (NMS) により重複検出を拒否
-        # conf_thres: 信頼度の閾値, iou_thres: IoUの閾値
-        # classes: 検出するクラスのリスト, agnostic: Trueの場合、クラスを無視してNMSを実行
-        pred = non_max_suppression(
-            pred, self.conf_thres, self.iou_thres, max_det=self.max_det, classes=None, agnostic=False)
-        print("pred", len(pred))
+        pred = non_max_suppression(pred,
+                                   self.conf_thres,  # 信頼度の閾値
+                                   self.iou_thres,  # IoUの閾値
+                                   max_det=self.max_det,  # 保持する最大検出数
+                                   classes=None,  # 検出するクラスのリスト
+                                   agnostic=False  # Trueの場合、クラスを無視してNMSを実行
+                                   )
 
+        # 検出結果を画像に描画
         if save_path:
-            # 検出結果の処理
             for det in pred:  # det:検出結果
                 print(Path(self.img_path).name, " 検出数", len(det), )
 
@@ -156,8 +158,9 @@ class Detect():
                     det[:, :4] = scale_boxes(
                         im.shape[2:], det[:, :4], im0.shape).round()
 
-                    # Write results
-                    # バウンディングボックスの座標(xyxy：[x_min, y_min, x_max, y_max] 形式)、信頼度(conf)、クラスID(cls)
+                    # xyxy: バウンディングボックスの座標([x_min, y_min, x_max, y_max] 形式)
+                    # conf: 信頼度
+                    # cls: クラスID
                     for *xyxy, conf, cls in reversed(det):
                         c = int(cls)  # クラスid
                         label = f'{labels[c]} {conf:.2f}'
@@ -169,12 +172,20 @@ class Detect():
             cv2.imwrite(save_path, im0)
             print('保存')
 
+        return pred
+
 
 if __name__ == '__main__':
-    image_path = '/home/kawano/etrobocon2023-camera-system/yolo/test_image.png'
-    save_path = '/home/kawano/etrobocon2023-camera-system/yolo/detect_test_image.png'
-    weights = '/home/kawano/etrobocon2023-camera-system/yolo/best.pt'
-    label_data = '/home/kawano/etrobocon2023-camera-system/yolo/label_data.yaml'
+    home_dir = os.path.expanduser("~")
+    image_path = os.path.join(
+        home_dir, "etrobocon2023-camera-system/yolo/test_image.png")
+    save_path = os.path.join(
+        home_dir, "etrobocon2023-camera-system/yolo/detect_test_image.png")
+    weights = os.path.join(
+        home_dir, "etrobocon2023-camera-system/yolo/best.pt")
+    label_data = os.path.join(
+        home_dir, "etrobocon2023-camera-system/yolo/label_data.yaml")
+
     d = Detect(img_path=image_path, weights=weights, label_data=label_data)
     d.predict(save_path)
     print('完了')
