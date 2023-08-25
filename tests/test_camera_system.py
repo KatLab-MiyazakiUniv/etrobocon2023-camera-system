@@ -4,7 +4,7 @@
 @note: モック化はunittestのmockを使用する
 """
 from src.camera_system import CameraSystem
-from train_tracker import TrainTracker
+from src.train_tracker import TrainTracker
 from unittest import mock
 
 

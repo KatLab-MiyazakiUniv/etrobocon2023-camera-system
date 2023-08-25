@@ -28,13 +28,13 @@ class CameraSystem:
             if state == "finish":
                 print(state)
                 break
+            elif state == "lap":
+                tt = TrainTracker(0)
+                # Webカメラのキャリブレーション
+                tt.calibrate()
+                # IoT列車の監視を開始
+                tt.observe()
             else:
                 print(state)
             # 2秒待つ
             time.sleep(2)
-
-        tt = TrainTracker(0)
-        # Webカメラのキャリブレーション
-        tt.calibrate()
-        # IoT列車の監視を開始
-        tt.observe()
