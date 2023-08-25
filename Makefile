@@ -9,6 +9,8 @@ help:
 	@echo " $$ make check_style"
 	@echo "カバレッジレポートの表示"
 	@echo " $$ make coverage"
+	@echo "物体検出を行う"
+	@echo " $$ make detect"
 
 run:
 	poetry run python src
@@ -27,3 +29,11 @@ coverage:
 	poetry run coverage run -m pytest
 	poetry run coverage report -i
 
+detect:
+	python3 src/detect.py --source machine_learning/test_image.png --save_dir machine_learning/detect_result
+
+predict:
+	python3 src/detect_fig.py
+
+zikken:
+	python3 src/zikken.py
