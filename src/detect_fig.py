@@ -1,18 +1,23 @@
+"""物体検出を行うモジュール.
+
+ベストショット画像を選択するための物体検出を行う。
+@author: kawanoichi
+"""
+
 import torch
 from pathlib import Path
 import os
 import numpy as np
 import sys
+from ultralytics.utils.plotting import Annotator, colors
 home_directory = os.path.expanduser("~")  # noqa
 PATH = os.path.join(
-    home_directory, "etrobocon2023-camera-system", "machine_learning")  # noqa
+    home_directory, "etrobocon2023-camera-system", "yolo")  # noqa
 sys.path.append(PATH)  # noqa
-from ultralytics.utils.plotting import Annotator, colors
 from models.common import DetectMultiBackend
-from utils.dataloaders import LoadImages
 from utils.general import (
     check_img_size, cv2, non_max_suppression, scale_boxes)
-from utils.torch_utils import select_device, smart_inference_mode
+from utils.torch_utils import select_device
 from utils.augmentations import letterbox
 
 
@@ -24,52 +29,77 @@ def exit_check(path):
 
 
 class Detect():
-    """yolov5をロボコン用に編集したクラス.
-    
-    ロボコン用に以下の変更を行った。
-    - いらない処理の除去
-    - cpuに限定させる
-    - strideに合わせて画像サイズを変更する処理の除去
-    """
+    """yolov5(物体検出)をロボコン用に編集したクラス."""
+
     DEVICE = 'cpu'
+    IMG_SIZE=(640, 480)
 
     def __init__(self, 
+                 img_path = 'image.png',
                  weights='best.pt',
                  label_data='label_data.yaml',
-                 img_size=(640, 480),
                  conf_thres=0.25,
                  iou_thres=0.45,
-                 max_det=1000,
+                 max_det=10,
                  line_thickness=3,
                  stride=32):
+        """コンストラクタ.
+
+        Args:
+            img_path (str): 画像パス
+            weights (str): 重みファイルパス
+            label_data (str): ラベルを記述したファイルパス
+            conf_thres (float): 信頼度閾値
+            iou_thres (float): NMS IOU 閾値
+            max_det (int): 最大検出数
+            line_thickness (int): カメラID
+            stride (int): ストライド
+        """
+        exit_check(img_path)
         exit_check(weights)
         exit_check(label_data)
-        self.weights = weights  # 重みファイルのpath
-        self.label_data = label_data  # dataset.yaml path
-        self.img_size = img_size  # inference size (height, width)
-        self.conf_thres = conf_thres  # 信頼度閾値
-        self.iou_thres = iou_thres  # NMS IOU 閾値
-        self.max_det = max_det  # maximum detections per image
-        self.line_thickness = line_thickness  # バウンディングボックスの線の太さ (pixels)
+        self.img_path = img_path
+        self.weights = weights
+        self.label_data = label_data
+        self.conf_thres = conf_thres
+        self.iou_thres = iou_thres
+        self.max_det = max_det
+        self.line_thickness = line_thickness
         self.stride = stride
 
-    def read_image(self, img_path, auto=True):
-        im0 = cv2.imread(img_path)  # BGR
+    def read_image(self, auto=True):
+        """画像を読み込む関数.
+
+        Args:
+            img_path: 画像パス
+        Returns:
+            im: パディング処理を行った入力画像
+            im0: 入力画像 
+        """
+        im0 = cv2.imread(self.img_path)  # BGR
         if im0 is None:
             return None, None
 
         # リサイズとパディング処理
-        im = letterbox(im0, self.img_size, stride=self.stride,
-                        auto=auto)[0]  # padded resize
-        im = im.transpose((2, 0, 1))[::-1]  # BGR -> RGB
-        im = np.ascontiguousarray(im)  # contiguous
+        im = letterbox(im0, Detect.IMG_SIZE, stride=self.stride,
+                        auto=auto)[0]
+        # BGR -> RGB
+        im = im.transpose((2, 0, 1))[::-1]
+        # 連続したメモリ領域に変換
+        im = np.ascontiguousarray(im)
 
         return im, im0
 
 
-    def predict(self, img_path, save_path=None):
-        exit_check(img_path)
-
+    def predict(self, save_path=None):
+        """物体の検出を行う関数.
+        Args:
+            save_path(str): 検出結果の画像保存パス
+                            Noneの場合、保存しない 
+        Returns:
+            im: パディング処理を行った入力画像
+            im0: 入力画像 
+        """
         # cpuを指定
         device = select_device(Detect.DEVICE)
 
@@ -80,106 +110,71 @@ class Detect():
         stride, labels, pt = model.stride, model.names, model.pt
 
         # 画像のサイズを指定されたストライド（ステップ）の倍数に合わせるための関数
-        self.img_size = check_img_size(self.img_size, s=stride)  # >> [640, 640]
+        img_size = check_img_size(Detect.IMG_SIZE, s=stride)  # >> [640, 640]
 
         # モデルの初期化
         bs = 1  # batch_size
         model.warmup(imgsz=(1 if pt or model.triton else bs,
                      3, *img_size))  # warmup
-                    #  3, *self.img_size))  # warmup
 
-        # 初回ループの出力
-        # img_path: /home/kawano/etrobocon2023-camera-system/src/detect_fig/verification_data/image1.png
-        # im:画像データのNumPy配列 (3, 640, 640)
-        # im0s: オリジナルの画像データ(640, 640, 3)
-        # s: image 1/36 /home/kawano/etrobocon2023-camera-system/src/detect_fig/verification_data/image1.png:
-
-        # for img_path, im, im0s, _, _ in dataset:
-        im, im0s = self.read_image(img_path)
-        print("im.shape", im.shape)
-        print("im0s.shape", im0s.shape)
-        # """
-        # PyTorchのテンソルに変換
-        im = torch.from_numpy(im).to(model.device)
-
-        # model.fp16がTrueの場合は、テンソルを半精度浮動小数点数（float16）に変換
-        # そうでない場合は、単精度浮動小数点数（float32）に変換
+        # 画像の読み込み
+        im, im0s = self.read_image()
+        
+        im = torch.from_numpy(im).to(model.device) # PyTorchのテンソルに変換
         im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
 
-        # テンソルの値を0から255の範囲から0.0から1.0の範囲にスケーリング
+        # スケーリング
         im /= 255  # 0 - 255 to 0.0 - 1.0
 
-        # もしimの形状が3次元（例：[3, 640, 640]）の場合、バッチ次元を追加して4次元のテンソルに変換
-        # これは、モデルに複数の画像を一度に処理させるための操作
+        # torch.Size([3, 640, 640]) >> torch.Size([1, 3, 640, 640])
         if len(im.shape) == 3:
-            # expand for batch dim torch.Size([3, 640, 640]) >> torch.Size([1, 3, 640, 640])
             im = im[None]
 
-        # im: 入力画像
-        # augment: データ拡張を行うかどうか
-        # visualize: 可視化を行うかどうか
-        # len(pred): 2
+        # 検出
         pred = model(im, augment=False, visualize=False)
 
-        # pred: 物体検出結果
-        # conf_thres: 信頼度の閾値
-        # iou_thres: IoUの閾値
-        # classes: 検出するクラスのリスト
-        # agnostic_nms: NMS(Non-Maximum Suppression)を適用するか
-        # max_det: 最大検出数
-        # NMS(Non-Maximum Suppression)関数
-        # 重なりのある複数の物体検出結果をフィルタリング
+        # 非最大値抑制 (NMS) により重複検出を拒否
+        # conf_thres: 信頼度の閾値, iou_thres: IoUの閾値
+        # classes: 検出するクラスのリスト, agnostic: Trueの場合、クラスを無視してNMSを実行
         pred = non_max_suppression(
             pred, self.conf_thres, self.iou_thres, max_det=self.max_det, classes=None, agnostic=False)
+        print("pred", len(pred))
 
-        # 検出結果の処理
-        for det in pred:  # det:検出結果
-            print(Path(img_path).name, " 検出数", len(det), )
+        if save_path:
+            # 検出結果の処理
+            for det in pred:  # det:検出結果
+                print(Path(self.img_path).name, " 検出数", len(det), )
 
-            # im0: 入力画像
-            im0 = im0s.copy()
+                im0 = im0s.copy()
 
-            # img_path >> /home/kawano/etrobocon2023-camera-system/src/detect_fig/verification_data/image1.png
-            img_path = Path(img_path)  # 入力と出力が同じだが、意味あるの？
+                # 画像にバウンディングボックスやラベルなどのアノテーションを追加
+                annotator = Annotator(
+                    im0, line_width=self.line_thickness, example=str(labels))
 
-            # save_path >> runs/detect/result22/image1.png
-            # save_path = os.img_path.join(str(save_dir), str(img_path.name))  # im.jpg
+                if len(det):
+                    # バウンディングボックス座標を画像サイズから別のサイズに変換
+                    det[:, :4] = scale_boxes(
+                        im.shape[2:], det[:, :4], im0.shape).round()
 
-            # 画像にバウンディングボックスやラベルなどのアノテーションを追加
-            annotator = Annotator(
-                im0, line_width=self.line_thickness, example=str(labels))
-
-            if len(det):
-                # バウンディングボックス座標を画像サイズから別のサイズに変換
-                det[:, :4] = scale_boxes(
-                    im.shape[2:], det[:, :4], im0.shape).round()
-
-                # Write results
-                # バウンディングボックスの座標(xyxy：[x_min, y_min, x_max, y_max] 形式)、信頼度(conf)、クラスID(cls)
-                for *xyxy, conf, cls in reversed(det):
-                    if save_path:
+                    # Write results
+                    # バウンディングボックスの座標(xyxy：[x_min, y_min, x_max, y_max] 形式)、信頼度(conf)、クラスID(cls)
+                    for *xyxy, conf, cls in reversed(det):
                         c = int(cls)  # クラスid
-
                         label = f'{labels[c]} {conf:.2f}'
-                        # label >> front 0.94
-                        #
-                        # annotator.box_label():画像にバウンディングボックスとラベルを追加
-                        # colors():検出されたクラスのインデックスに基づいて、一意の色を生成。
-                        #         True パラメータは、色をランダムに選択することを指示。
-                        #         異なるクラスは異なる色で表示されます。
+                        # 画像にバウンディングボックスとラベルを追加
                         annotator.box_label(xyxy, label, color=colors(c, True))
 
             # 検出結果を含む画像を保存
             im0 = annotator.result()
-            if save_path:
-                cv2.imwrite(save_path, im0)
+            cv2.imwrite(save_path, im0)
+            print('保存')
 
 
 if __name__ == '__main__':
-    image_path = '/home/kawano/etrobocon2023-camera-system/machine_learning/test_image.png'
-    save_path = '/home/kawano/etrobocon2023-camera-system/machine_learning/detect_test_image.png'
-    weights = '/home/kawano/etrobocon2023-camera-system/machine_learning/best.pt'
-    label_data = '/home/kawano/etrobocon2023-camera-system/machine_learning/label_data.yaml'
-    d = Detect(weights=weights, label_data=label_data)
-    d.predict(image_path, save_path)
+    image_path = '/home/kawano/etrobocon2023-camera-system/yolo/test_image.png'
+    save_path = '/home/kawano/etrobocon2023-camera-system/yolo/detect_test_image.png'
+    weights = '/home/kawano/etrobocon2023-camera-system/yolo/best.pt'
+    label_data = '/home/kawano/etrobocon2023-camera-system/yolo/label_data.yaml'
+    d = Detect(img_path=image_path, weights=weights, label_data=label_data)
+    d.predict(save_path)
     print('完了')
