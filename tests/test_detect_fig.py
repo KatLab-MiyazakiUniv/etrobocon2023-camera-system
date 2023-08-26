@@ -3,7 +3,6 @@
 @author: kawanoichi
 """
 from src.detect_fig import Detect
-import cv2
 import os
 
 

@@ -6,11 +6,6 @@
 @author: kawanoichi
 """
 
-from utils.augmentations import letterbox
-from utils.torch_utils import select_device
-from utils.general import (
-    check_img_size, cv2, non_max_suppression, scale_boxes)
-from models.common import DetectMultiBackend
 import torch
 from pathlib import Path
 import os
@@ -21,7 +16,12 @@ home_directory = os.path.expanduser("~")  # noqa
 PATH = os.path.join(
     home_directory, "etrobocon2023-camera-system", "yolo")  # noqa
 sys.path.append(PATH)  # noqa
-PATH = Path(PATH)
+PATH = Path(PATH)  # noqa
+from models.common import DetectMultiBackend
+from utils.general import (
+    check_img_size, cv2, non_max_suppression, scale_boxes)
+from utils.torch_utils import select_device
+from utils.augmentations import letterbox
 
 
 def check_exists(path):

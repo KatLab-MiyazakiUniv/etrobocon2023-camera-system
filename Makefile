@@ -16,7 +16,8 @@ run:
 	poetry run python src
 
 test:
-	poetry run pytest
+	poetry run pytest --ignore=tests/test_detect_fig.py
+	pytest tests/test_detect_fig.py
 
 format:
 	poetry run python -m autopep8 -i -r src/ tests/
