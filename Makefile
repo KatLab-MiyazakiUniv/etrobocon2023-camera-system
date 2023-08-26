@@ -30,10 +30,7 @@ coverage:
 	poetry run coverage report -i
 
 detect:
-	python3 src/detect.py --source machine_learning/test_image.png --save_dir machine_learning/detect_result
-
-predict:
 	python3 src/detect_fig.py
 
-zikken:
-	python3 src/zikken.py
+image_process:
+	python3 src/image_processing.py

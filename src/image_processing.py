@@ -13,21 +13,29 @@ class ImageProcessing:
     NOTE:
         以下の関数を保持.
         ・画像のリサイズ(resize_img)
-        ・画像の鮮明化(sharpening)
+        ・画像の鮮明化(sharpen_image)
     """
 
     @staticmethod
     def resize_img(img_path,
                    save_path=None,
-                   resize_w=100,
-                   resize_h=100) -> None:
+                   resize_w=640,
+                   resize_h=480) -> np.ndarray:
         """一枚の画像をリサイズ.
 
         Args:
-            img_path (string): リサイズする画像のパス
-            save_path (string): リサイズした画像を保存するパス
+            img_path (str): リサイズする画像のパス
+            save_path (str): リサイズした画像を保存するパス
+                             パス指定がない場合保存しない
             resize_w (int): リサイズする画像の幅
             resize_h (int): リサイズする画像の高さ
+
+        Return:
+            result(numpy.ndarray): リサイズした画像
+
+        Raises:
+            FileNotFoundError: 画像が見つからない場合に発生
+
         """
         try:
             # 読み込み
@@ -39,28 +47,31 @@ class ImageProcessing:
             # リサイズ
             resized_img = cv2.resize(img, (resize_w, resize_h))
 
-            if save_path is not None:
-                directory, _ = os.path.split(save_path)
-                if directory != "" and not os.path.exists(directory):
-                    os.makedirs(directory)
+            if save_path:
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 # 出力画像を保存
                 cv2.imwrite(save_path, resized_img)
 
+            return resized_img
+
         except FileNotFoundError as e:
             print("Error:", e)
-            exit(1)
 
     @staticmethod
-    def sharpening(img_path: str, save_path=None) -> np.ndarray:
+    def sharpen_image(img_path: str, save_path=None) -> np.ndarray:
         """画像の鮮明化を行う関数.
 
         手法：カラー画像のアンシャープマスク
 
         Args:
-            image_path(str):鮮明化する画像パス
-            save_path(str):鮮明化した画像の保存先パス
+            image_path(str): 鮮明化する画像パス
+            save_path(str): 鮮明化した画像の保存先パス
+                            パス指定がない場合保存しない
         Return:
-            result(numpy.ndarray): 鮮明化後画像
+            result(np.ndarray): 鮮明化後画像
+
+        Raises:
+            FileNotFoundError: 画像が見つからない場合に発生
         """
         try:
             # 読み込み
@@ -74,14 +85,32 @@ class ImageProcessing:
             # 引数: 元画像, 元の画像に対する加重係数（強度）
             #       ブラー画像, ブラー画像に対する減重係数(強度), 画像の明るさ(0は無視)
             result = cv2.addWeighted(img, 2.5, blurred, -1.5, 0)  # 差分から鮮明化
-            if save_path is not None:
-                directory, _ = os.path.split(save_path)
-                if directory != "" and not os.path.exists(directory):
-                    os.makedirs(directory)
+            if save_path:
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 # 出力画像を保存
                 cv2.imwrite(save_path, result)
             return result
 
         except FileNotFoundError as e:
             print("Error:", e)
-            exit(1)
+
+
+if __name__ == '__main__':
+    """作業用."""
+    home_dir = os.path.expanduser("~")
+    mid_dir = 'etrobocon2023-camera-system/yolo'
+    image_path = os.path.join(
+        home_dir, mid_dir, 'fig.png')
+    # home_dir, mid_dir, 'test_image.png')
+    weights = os.path.join(
+        home_dir, mid_dir, 'best.pt')
+    label_data = os.path.join(
+        home_dir, mid_dir, 'label_data.yaml')
+
+    save_path1 = os.path.join(
+        home_dir, mid_dir, 'resize_test_image.png')
+    save_path2 = os.path.join(
+        home_dir, mid_dir, 'shapeed_fig.png')
+    ImageProcessing.resize_img(image_path, save_path1)
+    ImageProcessing.sharpen_image(image_path, save_path2)
+    print('完了')

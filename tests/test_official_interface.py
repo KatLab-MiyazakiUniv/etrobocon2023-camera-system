@@ -6,6 +6,7 @@ from src.official_interface import OfficialInterface
 from unittest import mock
 from requests import Response
 
+
 class TestOfficialInterface:
     @mock.patch("requests.put")
     def test_set_train_pwm(self, mock_put):

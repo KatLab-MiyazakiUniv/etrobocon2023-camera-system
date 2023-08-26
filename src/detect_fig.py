@@ -1,9 +1,16 @@
 """物体検出を行うモジュール.
 
 ベストショット画像を選択するための物体検出を行う。
+参考コード:
+    https://github.com/ultralytics/yolov5
 @author: kawanoichi
 """
 
+from utils.augmentations import letterbox
+from utils.torch_utils import select_device
+from utils.general import (
+    check_img_size, cv2, non_max_suppression, scale_boxes)
+from models.common import DetectMultiBackend
 import torch
 from pathlib import Path
 import os
@@ -14,18 +21,21 @@ home_directory = os.path.expanduser("~")  # noqa
 PATH = os.path.join(
     home_directory, "etrobocon2023-camera-system", "yolo")  # noqa
 sys.path.append(PATH)  # noqa
-from models.common import DetectMultiBackend
-from utils.general import (
-    check_img_size, cv2, non_max_suppression, scale_boxes)
-from utils.torch_utils import select_device
-from utils.augmentations import letterbox
+PATH = Path(PATH)
 
 
-def exit_check(path):
-    """ファイル, ディレクトリが存在するかの確認パス."""
-    if not os.path.exists(path):
-        print(f"Error: {path} does not exist.")
-        sys.exit(1)
+def check_exists(path):
+    """ファイル, ディレクトリが存在するかの確認.
+
+    Args:
+        path (str): ファイルまたはディレクトリのパス
+    """
+    try:
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"'{path}' does not found\n")
+
+    except FileNotFoundError as e:
+        print("\nError:", e)
 
 
 class Detect():
@@ -35,9 +45,9 @@ class Detect():
     IMG_SIZE = (640, 480)
 
     def __init__(self,
-                 img_path='image.png',
-                 weights='best.pt',
-                 label_data='label_data.yaml',
+                 img_path=PATH / 'image.png',
+                 weights=PATH / 'best.pt',
+                 label_data=PATH / 'label_data.yaml',
                  conf_thres=0.25,
                  iou_thres=0.45,
                  max_det=10,
@@ -55,12 +65,12 @@ class Detect():
             line_thickness (int): カメラID
             stride (int): ストライド
         """
-        exit_check(img_path)
-        exit_check(weights)
-        exit_check(label_data)
-        self.img_path = img_path
-        self.weights = weights
-        self.label_data = label_data
+        check_exists(img_path)
+        check_exists(weights)
+        check_exists(label_data)
+        self.img_path = str(img_path)
+        self.weights = str(weights)
+        self.label_data = str(label_data)
         self.conf_thres = conf_thres
         self.iou_thres = iou_thres
         self.max_det = max_det
@@ -87,7 +97,7 @@ class Detect():
 
         return im, im0
 
-    def predict(self, save_path=None):
+    def detect(self, save_path=None):
         """物体の検出を行う関数.
 
         Args:
@@ -97,6 +107,7 @@ class Detect():
             im: パディング処理を行った入力画像
             im0: 入力画像
         """
+        print("self.img_path", type(self.img_path))
         # cpuを指定
         device = select_device(Detect.DEVICE)
 
@@ -114,8 +125,8 @@ class Detect():
 
         # モデルの初期化
         bs = 1  # batch_size
-        model.warmup(imgsz=(1 if pt or model.triton else bs,
-                     3, *img_size))  # warmup
+        model.warmup(
+            imgsz=(1 if pt or model.triton else bs, 3, *img_size))
 
         # 画像の読み込み
         im, im0s = self.read_image()
@@ -154,6 +165,7 @@ class Detect():
                     im0, line_width=self.line_thickness, example=str(labels))
 
                 if len(det):
+                    print("len(det)", det)
                     # バウンディングボックス座標を画像サイズから別のサイズに変換
                     det[:, :4] = scale_boxes(
                         im.shape[2:], det[:, :4], im0.shape).round()
@@ -170,22 +182,15 @@ class Detect():
             # 検出結果を含む画像を保存
             im0 = annotator.result()
             cv2.imwrite(save_path, im0)
-            print('保存')
 
         return pred
 
 
 if __name__ == '__main__':
+    """作業用."""
     home_dir = os.path.expanduser("~")
-    image_path = os.path.join(
-        home_dir, "etrobocon2023-camera-system/yolo/test_image.png")
     save_path = os.path.join(
         home_dir, "etrobocon2023-camera-system/yolo/detect_test_image.png")
-    weights = os.path.join(
-        home_dir, "etrobocon2023-camera-system/yolo/best.pt")
-    label_data = os.path.join(
-        home_dir, "etrobocon2023-camera-system/yolo/label_data.yaml")
-
-    d = Detect(img_path=image_path, weights=weights, label_data=label_data)
-    d.predict(save_path)
+    d = Detect()
+    d.detect(save_path)
     print('完了')
