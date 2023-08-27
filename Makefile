@@ -16,8 +16,7 @@ run:
 	poetry run python src
 
 test:
-	poetry run pytest --ignore=tests/test_detect_fig.py
-	pytest tests/test_detect_fig.py
+	poetry run pytest
 
 format:
 	poetry run python -m autopep8 -i -r src/ tests/
@@ -31,7 +30,7 @@ coverage:
 	poetry run coverage report -i
 
 detect:
-	python3 src/detect_fig.py
+	poetry run python src/detect_fig.py
 
 image_process:
-	python3 src/image_processing.py
+	python src/image_processing.py

@@ -37,19 +37,21 @@ import torchvision
 import yaml
 
 # Import 'ultralytics' package or install if if missing
-try:
-    import ultralytics
+# try:
+#     import ultralytics
 
-    assert hasattr(ultralytics, '__version__')  # verify package is not directory
-except (ImportError, AssertionError):
-    os.system('pip install -U ultralytics')
-    import ultralytics
+#     assert hasattr(ultralytics, '__version__')  # verify package is not directory
+# except (ImportError, AssertionError):
+#     os.system('pip install -U ultralytics')
+#     import ultralytics
+# import ultralytics
 
-from ultralytics.utils.checks import check_requirements
+# from ultralytics.utils.checks import check_requirements
 
 from utils import TryExcept, emojis
 from utils.downloads import curl_download, gsutil_getsize
-from utils.metrics import box_iou, fitness
+# from utils.metrics import box_iou, fitness
+from utils.metrics import box_iou
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]  # YOLOv5 root directory
@@ -73,22 +75,26 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # suppress verbose TF compiler warning
 
 
 def is_ascii(s=''):
+    print("1")
     # Is string composed of all ASCII (no UTF) characters? (note str().isascii() introduced in python 3.7)
     s = str(s)  # convert list, tuple, None, etc. to str
     return len(s.encode().decode('ascii', 'ignore')) == len(s)
 
 
 def is_chinese(s='人工智能'):
+    print("2")
     # Is string composed of any Chinese characters?
     return bool(re.search('[\u4e00-\u9fff]', str(s)))
 
 
 def is_colab():
+    print("3")
     # Is environment a Google Colab instance?
     return 'google.colab' in sys.modules
 
 
 def is_jupyter():
+    print("4")
     """
     Check if the current script is running inside a Jupyter Notebook.
     Verified on Colab, Jupyterlab, Kaggle, Paperspace.
@@ -739,7 +745,7 @@ def xyxy2xywh(x):
     return y
 
 
-def xywh2xyxy(x):
+def xywh2xyxy(x): # roboconに必要
     # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
     y[..., 0] = x[..., 0] - x[..., 2] / 2  # top left x
@@ -759,16 +765,16 @@ def xywhn2xyxy(x, w=640, h=640, padw=0, padh=0):
     return y
 
 
-def xyxy2xywhn(x, w=640, h=640, clip=False, eps=0.0):
-    # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] normalized where xy1=top-left, xy2=bottom-right
-    if clip:
-        clip_boxes(x, (h - eps, w - eps))  # warning: inplace clip
-    y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    y[..., 0] = ((x[..., 0] + x[..., 2]) / 2) / w  # x center
-    y[..., 1] = ((x[..., 1] + x[..., 3]) / 2) / h  # y center
-    y[..., 2] = (x[..., 2] - x[..., 0]) / w  # width
-    y[..., 3] = (x[..., 3] - x[..., 1]) / h  # height
-    return y
+# def xyxy2xywhn(x, w=640, h=640, clip=False, eps=0.0):
+#     # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] normalized where xy1=top-left, xy2=bottom-right
+#     if clip:
+#         clip_boxes(x, (h - eps, w - eps))  # warning: inplace clip
+#     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
+#     y[..., 0] = ((x[..., 0] + x[..., 2]) / 2) / w  # x center
+#     y[..., 1] = ((x[..., 1] + x[..., 3]) / 2) / h  # y center
+#     y[..., 2] = (x[..., 2] - x[..., 0]) / w  # width
+#     y[..., 3] = (x[..., 3] - x[..., 1]) / h  # height
+#     return y
 
 
 def xyn2xy(x, w=640, h=640, padw=0, padh=0):
@@ -841,7 +847,7 @@ def scale_segments(img1_shape, segments, img0_shape, ratio_pad=None, normalize=F
     return segments
 
 
-def clip_boxes(boxes, shape):
+def clip_boxes(boxes, shape): # roboconに必要
     # Clip boxes (xyxy) to image shape (height, width)
     if isinstance(boxes, torch.Tensor):  # faster individually
         boxes[..., 0].clamp_(0, shape[1])  # x1
@@ -1066,30 +1072,30 @@ def apply_classifier(x, model, img, im0):
     return x
 
 
-def increment_path(path, exist_ok=False, sep='', mkdir=False):
-    # Increment file or directory path, i.e. runs/exp --> runs/exp{sep}2, runs/exp{sep}3, ... etc.
-    path = Path(path)  # os-agnostic
-    if path.exists() and not exist_ok:
-        path, suffix = (path.with_suffix(''), path.suffix) if path.is_file() else (path, '')
+# def increment_path(path, exist_ok=False, sep='', mkdir=False):
+#     # Increment file or directory path, i.e. runs/exp --> runs/exp{sep}2, runs/exp{sep}3, ... etc.
+#     path = Path(path)  # os-agnostic
+#     if path.exists() and not exist_ok:
+#         path, suffix = (path.with_suffix(''), path.suffix) if path.is_file() else (path, '')
 
-        # Method 1
-        for n in range(2, 9999):
-            p = f'{path}{sep}{n}{suffix}'  # increment path
-            if not os.path.exists(p):  #
-                break
-        path = Path(p)
+#         # Method 1
+#         for n in range(2, 9999):
+#             p = f'{path}{sep}{n}{suffix}'  # increment path
+#             if not os.path.exists(p):  #
+#                 break
+#         path = Path(p)
 
-        # Method 2 (deprecated)
-        # dirs = glob.glob(f"{path}{sep}*")  # similar paths
-        # matches = [re.search(rf"{path.stem}{sep}(\d+)", d) for d in dirs]
-        # i = [int(m.groups()[0]) for m in matches if m]  # indices
-        # n = max(i) + 1 if i else 2  # increment number
-        # path = Path(f"{path}{sep}{n}{suffix}")  # increment path
+#         # Method 2 (deprecated)
+#         # dirs = glob.glob(f"{path}{sep}*")  # similar paths
+#         # matches = [re.search(rf"{path.stem}{sep}(\d+)", d) for d in dirs]
+#         # i = [int(m.groups()[0]) for m in matches if m]  # indices
+#         # n = max(i) + 1 if i else 2  # increment number
+#         # path = Path(f"{path}{sep}{n}{suffix}")  # increment path
 
-    if mkdir:
-        path.mkdir(parents=True, exist_ok=True)  # make directory
+#     if mkdir:
+#         path.mkdir(parents=True, exist_ok=True)  # make directory
 
-    return path
+#     return path
 
 
 # OpenCV Multilanguage-friendly functions ------------------------------------------------------------------------------------

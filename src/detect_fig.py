@@ -12,9 +12,7 @@ import os
 import numpy as np
 import sys
 from ultralytics.utils.plotting import Annotator, colors
-home_directory = os.path.expanduser("~")  # noqa
-PATH = os.path.join(
-    home_directory, "etrobocon2023-camera-system", "yolo")  # noqa
+PATH  = os.path.join("..", "etrobocon2023-camera-system", "yolo")  # noqa
 sys.path.append(PATH)  # noqa
 PATH = Path(PATH)  # noqa
 from models.common import DetectMultiBackend
@@ -107,7 +105,6 @@ class Detect():
             im: パディング処理を行った入力画像
             im0: 入力画像
         """
-        print("self.img_path", type(self.img_path))
         # cpuを指定
         device = select_device(Detect.DEVICE)
 
@@ -165,7 +162,6 @@ class Detect():
                     im0, line_width=self.line_thickness, example=str(labels))
 
                 if len(det):
-                    print("len(det)", det)
                     # バウンディングボックス座標を画像サイズから別のサイズに変換
                     det[:, :4] = scale_boxes(
                         im.shape[2:], det[:, :4], im0.shape).round()
@@ -180,6 +176,8 @@ class Detect():
                         annotator.box_label(xyxy, label, color=colors(c, True))
 
             # 検出結果を含む画像を保存
+            check_exists(os.path.dirname(save_path))
+
             im0 = annotator.result()
             cv2.imwrite(save_path, im0)
 
@@ -188,9 +186,7 @@ class Detect():
 
 if __name__ == '__main__':
     """作業用."""
-    home_dir = os.path.expanduser("~")
-    save_path = os.path.join(
-        home_dir, "etrobocon2023-camera-system/yolo/detect_test_image.png")
+    save_path = os.path.join(str(PATH), "detect_test_image.png")
     d = Detect()
     d.detect(save_path)
     print('完了')
