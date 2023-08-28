@@ -12,3 +12,4 @@ video/*
 *.jpg
 *.txt
 *.pt
+!tests\testdata\yolo\weight.pt
