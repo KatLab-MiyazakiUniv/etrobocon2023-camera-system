@@ -7,6 +7,8 @@ help:
 	@echo " $$ make format"
 	@echo "全てのソースコードのスタイルをチェックする"
 	@echo " $$ make check_style"
+	@echo "test, format, check_styleを行う"
+	@echo " $$ make all"
 	@echo "カバレッジレポートの表示"
 	@echo " $$ make coverage"
 
@@ -26,3 +28,8 @@ check_style:
 coverage:
 	poetry run coverage run -m pytest
 	poetry run coverage report -i
+
+all:
+	make test
+	make format
+	make check_style

@@ -6,9 +6,6 @@ from src.detect_fig import Detect
 import os
 import warnings
 
-# 特定のワーニングを無視
-warnings.filterwarnings("ignore", category=DeprecationWarning)
-
 
 def delete_img(path):
     """ファイルが存在していたら削除."""
