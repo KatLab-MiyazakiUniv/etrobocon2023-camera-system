@@ -97,20 +97,11 @@ class ImageProcessing:
 
 if __name__ == '__main__':
     """作業用."""
-    home_dir = os.path.expanduser("~")
-    mid_dir = 'etrobocon2023-camera-system/yolo'
-    image_path = os.path.join(
-        home_dir, mid_dir, 'fig.png')
-    # home_dir, mid_dir, 'test_image.png')
-    weights = os.path.join(
-        home_dir, mid_dir, 'best.pt')
-    label_data = os.path.join(
-        home_dir, mid_dir, 'label_data.yaml')
+    IMAGE_PATH = os.path.join("..", "fig_image")
+    image_path = os.path.join(IMAGE_PATH, "test_image.png")
+    save_resize_img_path = os.path.join(IMAGE_PATH, "resize_test_image.png")
+    save_shaped_img_path = os.path.join(IMAGE_PATH, "shaped_fig.png")
 
-    save_path1 = os.path.join(
-        home_dir, mid_dir, 'resize_test_image.png')
-    save_path2 = os.path.join(
-        home_dir, mid_dir, 'shapeed_fig.png')
-    ImageProcessing.resize_img(image_path, save_path1)
-    ImageProcessing.sharpen_image(image_path, save_path2)
+    ImageProcessing.resize_img(image_path, save_resize_img_path)
+    ImageProcessing.sharpen_image(image_path, save_shaped_img_path)
     print('完了')

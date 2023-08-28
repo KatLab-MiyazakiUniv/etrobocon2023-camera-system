@@ -9,8 +9,6 @@ help:
 	@echo " $$ make check_style"
 	@echo "カバレッジレポートの表示"
 	@echo " $$ make coverage"
-	@echo "物体検出を行う"
-	@echo " $$ make detect"
 
 run:
 	poetry run python src
@@ -28,9 +26,3 @@ check_style:
 coverage:
 	poetry run coverage run -m pytest
 	poetry run coverage report -i
-
-detect:
-	poetry run python src/detect_fig.py
-
-image_process:
-	python src/image_processing.py
