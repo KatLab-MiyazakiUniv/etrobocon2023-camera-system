@@ -49,7 +49,7 @@ class Detect():
                  img_path=IMAGE_PATH / 'test_image.png',
                  weights=YOLO_PATH / 'learned_weight.pt',
                  label_data=YOLO_PATH / 'label_data.yaml',
-                 conf_thres=0.25,
+                 conf_thres=0.6,
                  iou_thres=0.45,
                  max_det=10,
                  line_thickness=3,
