@@ -11,4 +11,4 @@ video/*
 *.png
 *.jpg
 *.txt
-# *.pt
+*.pt
