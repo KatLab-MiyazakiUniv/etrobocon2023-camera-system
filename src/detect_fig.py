@@ -31,11 +31,14 @@ IMAGE_PATH = os.path.join("..", "etrobocon2023-camera-system", "fig_image")  # n
 IMAGE_PATH = Path(IMAGE_PATH)  # noqa
 
 
-def check_exists(path):
+def check_exists(path) -> None:
     """ファイル, ディレクトリが存在するかの確認.
 
     Args:
         path (str): ファイルまたはディレクトリのパス
+
+    Raises:
+        FileNotFoundError: ファイルが見つからない場合に発生
     """
     try:
         if not os.path.exists(path):
@@ -84,19 +87,20 @@ class Detect():
         self.line_thickness = line_thickness
         self.stride = stride
 
-    def read_image(self, auto=True):
+    def read_image(self) -> np.ndarray:
         """画像を読み込む関数.
 
         Args:
             img_path: 画像パス
         Returns:
-            pred: 予測結果
+            im(np.ndarray): パディング処理を行った入力画像
+            im0(np.ndarray): 入力画像
         """
         im0 = cv2.imread(self.img_path)  # BGR
 
         # リサイズとパディング処理
         im = letterbox(im0, Detect.IMG_SIZE, stride=self.stride,
-                       auto=auto)[0]
+                       auto=True)[0]
         # BGR -> RGB
         im = im.transpose((2, 0, 1))[::-1]
         # 連続したメモリ領域に変換
@@ -104,15 +108,14 @@ class Detect():
 
         return im, im0
 
-    def detect(self, save_path=None):
+    def detect(self, save_path=None) -> list:
         """物体の検出を行う関数.
 
         Args:
             save_path(str): 検出結果の画像保存パス
                             Noneの場合、保存しない
         Returns:
-            im: パディング処理を行った入力画像
-            im0: 入力画像
+            pred: 予測結果
         """
         # cpuを指定
         device = select_device(Detect.DEVICE)
