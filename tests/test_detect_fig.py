@@ -9,6 +9,7 @@ import warnings
 # 特定のワーニングを無視
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+
 def delete_img(path):
     """ファイルが存在していたら削除."""
     if os.path.exists(path):
@@ -20,8 +21,8 @@ class TestImageProcessing:
         """前処理."""
         self.img_path = "tests/testdata/img/fig.png"
         self.save_path = "tests/testdata/img/detect_fig.png"
-        self.weights = "tests/testdata/yolo/best.pt"
-        self.label_data = "tests/testdata/yolo/label_data.ya,l"
+        self.weights = "tests/testdata/yolo/weight.pt"
+        self.label_data = "tests/testdata/yolo/label.ya,l"
         self.detect = Detect(self.img_path, self.weights, self.label_data)
         delete_img(self.save_path)
 

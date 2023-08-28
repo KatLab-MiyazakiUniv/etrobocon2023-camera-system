@@ -9,7 +9,6 @@ video/*
 
 # 機械学習
 *.png
-!image.png
 *.jpg
 *.txt
-!detect_requirements.txt
+# *.pt

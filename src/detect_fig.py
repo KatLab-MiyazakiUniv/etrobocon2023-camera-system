@@ -12,14 +12,17 @@ import os
 import numpy as np
 import sys
 from ultralytics.utils.plotting import Annotator, colors
-PATH  = os.path.join("..", "etrobocon2023-camera-system", "yolo")  # noqa
-sys.path.append(PATH)  # noqa
-PATH = Path(PATH)  # noqa
+YOLO_PATH = os.path.join("..", "etrobocon2023-camera-system", "yolo")  # noqa
+sys.path.append(YOLO_PATH)  # noqa
+YOLO_PATH = Path(YOLO_PATH)  # noqa
 from models.common import DetectMultiBackend
 from utils.general import (
     check_img_size, cv2, non_max_suppression, scale_boxes)
 from utils.torch_utils import select_device
 from utils.augmentations import letterbox
+
+IMAGE_PATH = os.path.join("..", "etrobocon2023-camera-system", "fig_image")  # noqa
+IMAGE_PATH = Path(IMAGE_PATH)  # noqa
 
 
 def check_exists(path):
@@ -43,9 +46,9 @@ class Detect():
     IMG_SIZE = (640, 480)
 
     def __init__(self,
-                 img_path=PATH / 'image.png',
-                 weights=PATH / 'best.pt',
-                 label_data=PATH / 'label_data.yaml',
+                 img_path=IMAGE_PATH / 'test_image.png',
+                 weights=YOLO_PATH / 'learned_weight.pt',
+                 label_data=YOLO_PATH / 'label_data.yaml',
                  conf_thres=0.25,
                  iou_thres=0.45,
                  max_det=10,
@@ -121,9 +124,9 @@ class Detect():
         img_size = check_img_size(Detect.IMG_SIZE, s=stride)  # >> [640, 640]
 
         # モデルの初期化
-        bs = 1  # batch_size
+        batch_size = 1
         model.warmup(
-            imgsz=(1 if pt or model.triton else bs, 3, *img_size))
+            imgsz=(1 if pt or model.triton else batch_size, 3, *img_size))
 
         # 画像の読み込み
         im, im0s = self.read_image()
@@ -186,7 +189,6 @@ class Detect():
 
 if __name__ == '__main__':
     """作業用."""
-    save_path = os.path.join(str(PATH), "detect_test_image.png")
+    save_path = os.path.join(str(IMAGE_PATH), "detect_test_image.png")
     d = Detect()
     d.detect(save_path)
-    print('完了')

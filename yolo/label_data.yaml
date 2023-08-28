@@ -1,6 +1,8 @@
 names: 
-- front
-- back
-- right
-- left
-nc: 4
+- Fig
+- FrontalFace
+- Profile
+
+nc: 3
+train: version3/train_trialrun1_full_64_48/train/images
+val: version3/train_trialrun1_full_64_48/valid/images
