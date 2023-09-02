@@ -16,7 +16,7 @@ run:
 	poetry run python src
 
 test:
-	poetry run pytest
+	poetry run pytest -W ignore::DeprecationWarning
 
 format:
 	poetry run python -m autopep8 -i -r src/ tests/
@@ -33,3 +33,6 @@ all:
 	make test
 	make format
 	make check_style
+
+detect:
+	poetry run python src/detect_fig.py

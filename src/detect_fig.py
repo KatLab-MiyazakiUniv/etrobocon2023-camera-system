@@ -18,7 +18,10 @@ import os
 import numpy as np
 import sys
 from ultralytics.utils.plotting import Annotator, colors
-YOLO_PATH = os.path.join("..", "etrobocon2023-camera-system", "yolo")  # noqa
+import warnings
+
+script_dir = os.path.dirname(os.path.abspath(__file__))  # noqa
+YOLO_PATH = os.path.join(script_dir, "..", "yolo")  # noqa
 sys.path.append(YOLO_PATH)  # noqa
 YOLO_PATH = Path(YOLO_PATH)  # noqa
 from models.common import DetectMultiBackend
@@ -27,37 +30,19 @@ from utils.general import (
 from utils.torch_utils import select_device
 from utils.augmentations import letterbox
 
-IMAGE_PATH = os.path.join("..", "etrobocon2023-camera-system", "fig_image")  # noqa
-IMAGE_PATH = Path(IMAGE_PATH)  # noqa
+IMAGE_PATH = os.path.join(script_dir, "..", "fig_image")
+IMAGE_PATH = Path(IMAGE_PATH)
 
 
-def check_exists(path) -> None:
-    """ファイル, ディレクトリが存在するかの確認.
-
-    Args:
-        path (str): ファイルまたはディレクトリのパス
-
-    Raises:
-        FileNotFoundError: ファイルが見つからない場合に発生
-    """
-    try:
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"'{path}' does not found\n")
-
-    except FileNotFoundError as e:
-        print("\nError:", e)
-
-
-class Detect():
+class DetectedObject():
     """yolov5(物体検出)をロボコン用に編集したクラス."""
 
     DEVICE = 'cpu'
     IMG_SIZE = (640, 480)
 
     def __init__(self,
-                 img_path=IMAGE_PATH / 'test_image.png',
-                 weights=YOLO_PATH / 'learned_weight.pt',
-                 label_data=YOLO_PATH / 'label_data.yaml',
+                 weights=YOLO_PATH/'learned_fig_weight.pt',
+                 label_data=YOLO_PATH/'fig_label.yaml',
                  conf_thres=0.6,
                  iou_thres=0.45,
                  max_det=10,
@@ -66,7 +51,6 @@ class Detect():
         """コンストラクタ.
 
         Args:
-            img_path (str): 画像パス
             weights (str): 重みファイルパス
             label_data (str): ラベルを記述したファイルパス
             conf_thres (float): 信頼度閾値
@@ -75,10 +59,8 @@ class Detect():
             line_thickness (int): カメラID
             stride (int): ストライド
         """
-        check_exists(img_path)
-        check_exists(weights)
-        check_exists(label_data)
-        self.img_path = str(img_path)
+        self.check_exist(weights)
+        self.check_exist(label_data)
         self.weights = str(weights)
         self.label_data = str(label_data)
         self.conf_thres = conf_thres
@@ -87,38 +69,37 @@ class Detect():
         self.line_thickness = line_thickness
         self.stride = stride
 
-    def read_image(self) -> np.ndarray:
-        """画像を読み込む関数.
+    @staticmethod
+    def check_exist(path) -> bool:
+        """ファイル, ディレクトリが存在するかの確認.
 
         Args:
-            img_path: 画像パス
-        Returns:
-            im(np.ndarray): パディング処理を行った入力画像
-            im0(np.ndarray): 入力画像
+            path (str): ファイルまたはディレクトリのパス
+
+        Raises:
+            FileNotFoundError: ファイルが見つからない場合に発生
         """
-        im0 = cv2.imread(self.img_path)  # BGR
+        if not os.path.exists(path):
+            warnings.warn(f"'{path}' does not exist", Warning)
+            return False
+        return True
 
-        # リサイズとパディング処理
-        im = letterbox(im0, Detect.IMG_SIZE, stride=self.stride,
-                       auto=True)[0]
-        # BGR -> RGB
-        im = im.transpose((2, 0, 1))[::-1]
-        # 連続したメモリ領域に変換
-        im = np.ascontiguousarray(im)
-
-        return im, im0
-
-    def detect(self, save_path=None) -> list:
+    def detect_objects(self, img_path=IMAGE_PATH/'test_image.png', save_path=None) -> list:
         """物体の検出を行う関数.
 
         Args:
+            img_path(str): 物体検出を行う画像パス
             save_path(str): 検出結果の画像保存パス
                             Noneの場合、保存しない
         Returns:
-            pred: 予測結果
+            bool: 入力ファイルがなかった場合、Falseを返す
+            list: 正常に物体検出を行った場合、予測結果を返す
         """
+        if not self.check_exist(img_path):
+            return False
+
         # cpuを指定
-        device = select_device(Detect.DEVICE)
+        device = select_device(DetectedObject.DEVICE)
 
         # モデルの読み込み
         model = DetectMultiBackend(self.weights,
@@ -130,7 +111,8 @@ class Detect():
         stride, labels, pt = model.stride, model.names, model.pt
 
         # 画像のサイズを指定されたストライド（ステップ）の倍数に合わせるための関数
-        img_size = check_img_size(Detect.IMG_SIZE, s=stride)  # >> [640, 640]
+        img_size = check_img_size(
+            DetectedObject.IMG_SIZE, s=stride)  # >> [640, 640]
 
         # モデルの初期化
         batch_size = 1
@@ -138,20 +120,29 @@ class Detect():
             imgsz=(1 if pt or model.triton else batch_size, 3, *img_size))
 
         # 画像の読み込み
-        im, im0s = self.read_image()
+        original_img = cv2.imread(img_path)  # BGR
 
-        im = torch.from_numpy(im).to(model.device)  # PyTorchのテンソルに変換
-        im = im.half() if model.fp16 else im.float()  # uint8 to fp16/32
+        # パディング処理
+        img = letterbox(original_img, DetectedObject.IMG_SIZE, stride=self.stride,
+                        auto=True)[0]
+        # BGR -> RGB
+        img = img.transpose((2, 0, 1))[::-1]
+
+        # 連続したメモリ領域に変換
+        img = np.ascontiguousarray(img)
+
+        img = torch.from_numpy(img).to(model.device)  # PyTorchのテンソルに変換
+        img = img.half() if model.fp16 else img.float()  # uint8 to fp16/32
 
         # スケーリング
-        im /= 255  # 0 - 255 to 0.0 - 1.0
+        img /= 255  # 0 - 255 to 0.0 - 1.0
 
         # torch.Size([3, 640, 640]) >> torch.Size([1, 3, 640, 640])
-        if len(im.shape) == 3:
-            im = im[None]
+        if len(img.shape) == 3:
+            img = img[None]
 
         # 検出
-        pred = model(im, augment=False, visualize=False)
+        pred = model(img, augment=False, visualize=False)
 
         # 非最大値抑制 (NMS) により重複検出を拒否
         pred = non_max_suppression(pred,
@@ -165,18 +156,18 @@ class Detect():
         # 検出結果を画像に描画
         if save_path:
             for det in pred:  # det:検出結果
-                print(Path(self.img_path).name, " 検出数", len(det), )
+                print(Path(img_path).name, " 検出数", len(det), )
 
-                im0 = im0s.copy()
+                save_img = original_img.copy()
 
                 # 画像にバウンディングボックスやラベルなどのアノテーションを追加
                 annotator = Annotator(
-                    im0, line_width=self.line_thickness, example=str(labels))
+                    save_img, line_width=self.line_thickness, example=str(labels))
 
                 if len(det):
                     # バウンディングボックス座標を画像サイズから別のサイズに変換
                     det[:, :4] = scale_boxes(
-                        im.shape[2:], det[:, :4], im0.shape).round()
+                        img.shape[2:], det[:, :4], save_img.shape).round()
 
                     # xyxy: バウンディングボックスの座標([x_min, y_min, x_max, y_max] 形式)
                     # conf: 信頼度
@@ -188,10 +179,9 @@ class Detect():
                         annotator.box_label(xyxy, label, color=colors(c, True))
 
             # 検出結果を含む画像を保存
-            check_exists(os.path.dirname(save_path))
-
-            im0 = annotator.result()
-            cv2.imwrite(save_path, im0)
+            save_img = annotator.result()
+            cv2.imwrite(save_path, save_img)
+            print("保存")
 
         return pred
 
@@ -199,5 +189,7 @@ class Detect():
 if __name__ == '__main__':
     """作業用."""
     save_path = os.path.join(str(IMAGE_PATH), "detect_test_image.png")
-    d = Detect()
-    d.detect(save_path)
+    d = DetectedObject()
+    d.detect_objects(save_path=save_path)
+
+    print("完了")

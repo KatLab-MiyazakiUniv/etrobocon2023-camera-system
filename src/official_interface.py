@@ -1,7 +1,7 @@
 """競技システムインタフェース.
 
 競技システムとの通信を行うクラス.
-@author: miyashita64
+@author: miyashita64 kawanoichi
 """
 import requests
 from image_processing import ImageProcessing

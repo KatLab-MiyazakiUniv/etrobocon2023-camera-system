@@ -2,9 +2,8 @@
 
 @author: kawanoichi
 """
-from src.detect_fig import Detect
+from src.detect_fig import DetectedObject
 import os
-import warnings
 
 
 def delete_img(path):
@@ -19,8 +18,8 @@ class TestImageProcessing:
         self.img_path = "tests/testdata/img/fig.png"
         self.save_path = "tests/testdata/img/detect_fig.png"
         self.weights = "tests/testdata/yolo/weight.pt"
-        self.label_data = "tests/testdata/yolo/label.ya,l"
-        self.detect = Detect(self.img_path, self.weights, self.label_data)
+        self.label_data = "tests/testdata/yolo/label.yaml"
+        self.detect = DetectedObject(self.weights, self.label_data)
         delete_img(self.save_path)
 
     def teardown_method(self):
@@ -29,7 +28,8 @@ class TestImageProcessing:
 
     def test_detect(self):
         """物体検出のテスト."""
-        pred = self.detect.detect(self.save_path)
+        pred = self.detect.detect_objects(self.img_path, self.save_path)
+        assert pred is not False
         det = pred[0]
         assert len(det) == 1
         assert os.path.exists(self.save_path)
