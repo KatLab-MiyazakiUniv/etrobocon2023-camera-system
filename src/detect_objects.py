@@ -56,7 +56,7 @@ class DetectedObject():
             conf_thres (float): 信頼度閾値
             iou_thres (float): NMS IOU 閾値
             max_det (int): 最大検出数
-            line_thickness (int): カメラID
+            line_thickness (int): バウンディングボックスの太さ
             stride (int): ストライド
         """
         self.check_exist(weights)
@@ -161,7 +161,7 @@ class DetectedObject():
         # 検出結果を画像に描画
         if save_path:
             for det in pred:  # det:検出結果
-                print(Path(img_path).name, " 検出数", len(det), )
+                print(Path(img_path).name, " 検出数", len(det))
 
                 save_img = original_img.copy()
 
@@ -193,6 +193,24 @@ class DetectedObject():
 
 if __name__ == '__main__':
     """作業用."""
+    import argparse
     save_path = os.path.join(str(IMAGE_PATH), "detect_test_image.png")
-    d = DetectedObject()
-    d.detect_objects(save_path=save_path)
+
+    parser = argparse.ArgumentParser(description="リアカメラに関するプログラム")
+    
+    parser.add_argument("-wpath", "--weights", type=str, default=YOLO_PATH/'learned_fig_weight.pt', help='重みファイルパス')
+    parser.add_argument("-label", "--label_data", type=str, default=YOLO_PATH/'fig_label.yaml', help='ラベルを記述したファイルパス')
+    parser.add_argument("-conf", "--conf_thres", type=int, default=0.6, help='信頼度閾値')
+    parser.add_argument("-iou", "--iou_thres", type=int, default=0.45, help='IOU 閾値')
+    parser.add_argument("--max_det", type=int, default=10, help='最大検出数')
+    parser.add_argument("--line_thickness", type=int, default=3, help='バウンディングボックスの太さ')
+    parser.add_argument("--stride", type=int, default=32, help='ストライド')
+    args = parser.parse_args()
+
+    d = DetectedObject(**vars(args))
+
+    parser.add_argument("-img", "--img_path", type=str, default=IMAGE_PATH/'test_image.png', help='入力画像')
+    parser.add_argument("-spath", "--save_path", type=str, default=save_path, help='検出画像の保存先. Noneの場合保存しない')
+    args = parser.parse_args()
+
+    d.detect_objects(img_path=args.img_path, save_path=args.save_path)
