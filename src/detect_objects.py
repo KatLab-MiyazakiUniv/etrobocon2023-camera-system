@@ -130,8 +130,8 @@ class DetectedObject():
                         DetectedObject.IMG_SIZE,
                         stride=self.stride,
                         auto=True)[0]
-        img = img.transpose((2, 0, 1))[::-1] # BGR -> RGB
-        img = np.ascontiguousarray(img) # 連続したメモリ領域に変換
+        img = img.transpose((2, 0, 1))[::-1]  # BGR -> RGB
+        img = np.ascontiguousarray(img)  # 連続したメモリ領域に変換
         img = torch.from_numpy(img).to(model.device)  # PyTorchのテンソルに変換
         img = img.half() if model.fp16 else img.float()  # uint8 to fp16/32
 
