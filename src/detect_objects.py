@@ -197,20 +197,29 @@ if __name__ == '__main__':
     save_path = os.path.join(str(IMAGE_PATH), "detect_test_image.png")
 
     parser = argparse.ArgumentParser(description="リアカメラに関するプログラム")
-    
-    parser.add_argument("-wpath", "--weights", type=str, default=YOLO_PATH/'learned_fig_weight.pt', help='重みファイルパス')
-    parser.add_argument("-label", "--label_data", type=str, default=YOLO_PATH/'fig_label.yaml', help='ラベルを記述したファイルパス')
-    parser.add_argument("-conf", "--conf_thres", type=int, default=0.6, help='信頼度閾値')
-    parser.add_argument("-iou", "--iou_thres", type=int, default=0.45, help='IOU 閾値')
+
+    parser.add_argument("-wpath", "--weights", type=str,
+                        default=YOLO_PATH/'learned_fig_weight.pt',
+                        help='重みファイルパス')
+    parser.add_argument("-label", "--label_data", type=str,
+                        default=YOLO_PATH/'fig_label.yaml',
+                        help='ラベルを記述したファイルパス')
+    parser.add_argument("-conf", "--conf_thres", type=int,
+                        default=0.6, help='信頼度閾値')
+    parser.add_argument("-iou", "--iou_thres", type=int,
+                        default=0.45, help='IOU 閾値')
     parser.add_argument("--max_det", type=int, default=10, help='最大検出数')
-    parser.add_argument("--line_thickness", type=int, default=3, help='バウンディングボックスの太さ')
+    parser.add_argument("--line_thickness", type=int,
+                        default=3, help='バウンディングボックスの太さ')
     parser.add_argument("--stride", type=int, default=32, help='ストライド')
     args = parser.parse_args()
 
     d = DetectedObject(**vars(args))
 
-    parser.add_argument("-img", "--img_path", type=str, default=IMAGE_PATH/'test_image.png', help='入力画像')
-    parser.add_argument("-spath", "--save_path", type=str, default=save_path, help='検出画像の保存先. Noneの場合保存しない')
+    parser.add_argument("-img", "--img_path", type=str,
+                        default=IMAGE_PATH/'test_image.png', help='入力画像')
+    parser.add_argument("-spath", "--save_path", type=str,
+                        default=save_path, help='検出画像の保存先. Noneの場合保存しない')
     args = parser.parse_args()
 
     d.detect_objects(img_path=args.img_path, save_path=args.save_path)
