@@ -130,12 +130,8 @@ class DetectedObject():
                         DetectedObject.IMG_SIZE,
                         stride=self.stride,
                         auto=True)[0]
-        # BGR -> RGB
-        img = img.transpose((2, 0, 1))[::-1]
-
-        # 連続したメモリ領域に変換
-        img = np.ascontiguousarray(img)
-
+        img = img.transpose((2, 0, 1))[::-1] # BGR -> RGB
+        img = np.ascontiguousarray(img) # 連続したメモリ領域に変換
         img = torch.from_numpy(img).to(model.device)  # PyTorchのテンソルに変換
         img = img.half() if model.fp16 else img.float()  # uint8 to fp16/32
 
@@ -179,8 +175,8 @@ class DetectedObject():
                     # conf: 信頼度
                     # cls: クラスID
                     for *xyxy, conf, cls in reversed(det):
-                        c = int(cls)  # クラスid
-                        label = f'{labels[c]} {conf:.2f}'
+                        c = int(cls)
+                        label = f'{labels[int(cls)]} {conf:.2f}'
                         # 画像にバウンディングボックスとラベルを追加
                         annotator.box_label(xyxy, label, color=colors(c, True))
 
