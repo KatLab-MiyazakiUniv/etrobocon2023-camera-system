@@ -76,15 +76,18 @@ class DetectedObject():
         Args:
             path (str): ファイルまたはディレクトリのパス
 
-        Raises:
-            FileNotFoundError: ファイルが見つからない場合に発生
+        return:
+            bool: 存在すればTrue
+                  存在しなければFalse
         """
         if not os.path.exists(path):
             warnings.warn(f"'{path}' does not exist", Warning)
             return False
         return True
 
-    def detect_objects(self, img_path=IMAGE_PATH/'test_image.png', save_path=None) -> list:
+    def detect_objects(self,
+                       img_path=IMAGE_PATH/'test_image.png',
+                       save_path=None) -> list:
         """物体の検出を行う関数.
 
         Args:
@@ -123,7 +126,9 @@ class DetectedObject():
         original_img = cv2.imread(img_path)  # BGR
 
         # パディング処理
-        img = letterbox(original_img, DetectedObject.IMG_SIZE, stride=self.stride,
+        img = letterbox(original_img,
+                        DetectedObject.IMG_SIZE,
+                        stride=self.stride,
                         auto=True)[0]
         # BGR -> RGB
         img = img.transpose((2, 0, 1))[::-1]
@@ -161,8 +166,9 @@ class DetectedObject():
                 save_img = original_img.copy()
 
                 # 画像にバウンディングボックスやラベルなどのアノテーションを追加
-                annotator = Annotator(
-                    save_img, line_width=self.line_thickness, example=str(labels))
+                annotator = Annotator(save_img,
+                                      line_width=self.line_thickness,
+                                      example=str(labels))
 
                 if len(det):
                     # バウンディングボックス座標を画像サイズから別のサイズに変換
@@ -181,7 +187,6 @@ class DetectedObject():
             # 検出結果を含む画像を保存
             save_img = annotator.result()
             cv2.imwrite(save_path, save_img)
-            print("保存")
 
         return pred
 
@@ -191,5 +196,3 @@ if __name__ == '__main__':
     save_path = os.path.join(str(IMAGE_PATH), "detect_test_image.png")
     d = DetectedObject()
     d.detect_objects(save_path=save_path)
-
-    print("完了")

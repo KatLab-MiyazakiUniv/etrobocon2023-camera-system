@@ -2,7 +2,7 @@
 
 @author: kawanoichi
 """
-from src.detect_fig import DetectedObject
+from src.detect_objects import DetectedObject
 import os
 
 

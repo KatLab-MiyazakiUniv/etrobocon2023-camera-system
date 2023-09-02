@@ -30,9 +30,6 @@ coverage:
 	poetry run coverage report -i
 
 all:
-	make test
 	make format
+	make test
 	make check_style
-
-detect:
-	poetry run python src/detect_fig.py
