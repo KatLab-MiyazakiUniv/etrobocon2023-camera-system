@@ -6,10 +6,18 @@
 import requests
 import cv2
 
+
 class ResponseError(Exception):
-    """レスポンスエラー用の例外"""
+    """レスポンスエラー用の例外."""
+
     def __init__(self, message):
+        """コンストラクタ.
+
+        Args:
+            message (string): エラーメッセージ
+        """
         super().__init__(message)
+
 
 class OfficialInterface:
     """IoT列車の操作を行うクラス."""
@@ -68,7 +76,7 @@ class OfficialInterface:
                 image_data = image_file.read()
             # APIにリクエストを送信
             response = requests.post(url, headers=headers,
-                                    data=image_data, params=params)
+                                     data=image_data, params=params)
             # レスポンスのステータスコードが200の場合、通信成功
             if response.status_code != 200:
                 raise ResponseError("Failed to send fig image.")
