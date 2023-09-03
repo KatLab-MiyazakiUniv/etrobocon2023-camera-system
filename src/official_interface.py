@@ -6,6 +6,11 @@
 import requests
 import cv2
 
+class ResponseError(Exception):
+    """レスポンスエラー用の例外"""
+    def __init__(self, message):
+        super().__init__(message)
+
 class OfficialInterface:
     """IoT列車の操作を行うクラス."""
 
@@ -22,14 +27,17 @@ class OfficialInterface:
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
         """
+        success = False
+        url = f"http://{cls.SERVER_IP}/train?pwm={pwm}"
         try:
-            url = f"http://{cls.SERVER_IP}/train?pwm={pwm}"
             # APIにリクエストを送信
             response = requests.put(url)
             # レスポンスのステータスコードが200の場合、通信成功
-            success = (response.status_code == 200)
-        except:
-            success = False
+            if response.status_code != 200:
+                raise ResponseError("Failed to set PWM for IoT train.")
+            success = True
+        except Exception as e:
+            print(e)
         return success
 
     @classmethod
@@ -43,28 +51,30 @@ class OfficialInterface:
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
         """
+        success = False
+        url = f"http://{cls.SERVER_IP}/snap"
+        headers = {
+            "Content-Type": "image/png"
+        }
+        # チームIDをリクエストに含める
+        params = {
+            "id": cls.TEAM_ID
+        }
+
         try:
-            url = f"http://{cls.SERVER_IP}/snap"
-            headers = {
-                "Content-Type": "image/png"
-            }
-
-            # 指定された画像をリクエストに含める
-            cls.resize_img(img_path, resize_img_path, 640, 480)
-            with open(resize_img_path, "rb") as image_file:
+            # 指定された画像を開く
+            with open(img_path, "rb") as image_file:
+                cls.resize_img(img_path, resize_img_path)
                 image_data = image_file.read()
-            # チームIDをリクエストに含める
-            params = {
-                "id": cls.TEAM_ID
-            }
-
             # APIにリクエストを送信
             response = requests.post(url, headers=headers,
                                     data=image_data, params=params)
             # レスポンスのステータスコードが200の場合、通信成功
-            success = (response.status_code == 200)
-        except:
-            success = False
+            if response.status_code != 200:
+                raise ResponseError("Failed to send fig image.")
+            success = True
+        except Exception as e:
+            print(e)
         return success
 
     @classmethod
