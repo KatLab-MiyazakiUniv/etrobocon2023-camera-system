@@ -17,7 +17,7 @@ class ImageProcessing:
     """
 
     @staticmethod
-    def resize_img(img_path,
+    def resize_img(img_path: str,
                    save_path=None,
                    resize_w=640,
                    resize_h=480) -> np.ndarray:

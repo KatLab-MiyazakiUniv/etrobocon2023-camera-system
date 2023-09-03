@@ -70,7 +70,7 @@ class DetectObject():
         self.stride = stride
 
     @staticmethod
-    def check_exist(path) -> bool:
+    def check_exist(path: str) -> bool:
         """ファイル, ディレクトリが存在するかの確認.
 
         Args:
