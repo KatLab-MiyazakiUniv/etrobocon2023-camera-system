@@ -34,7 +34,7 @@ IMAGE_PATH = os.path.join(script_dir, "..", "fig_image")
 IMAGE_PATH = Path(IMAGE_PATH)
 
 
-class DetectedObject():
+class DetectObject():
     """yolov5(物体検出)をロボコン用に編集したクラス."""
 
     DEVICE = 'cpu'
@@ -85,9 +85,9 @@ class DetectedObject():
             return False
         return True
 
-    def detect_objects(self,
-                       img_path=IMAGE_PATH/'test_image.png',
-                       save_path=None) -> list:
+    def detect_object(self,
+                      img_path=IMAGE_PATH/'test_image.png',
+                      save_path=None) -> list:
         """物体の検出を行う関数.
 
         Args:
@@ -102,7 +102,7 @@ class DetectedObject():
             return False
 
         # cpuを指定
-        device = select_device(DetectedObject.DEVICE)
+        device = select_device(DetectObject.DEVICE)
 
         # モデルの読み込み
         model = DetectMultiBackend(self.weights,
@@ -115,7 +115,7 @@ class DetectedObject():
 
         # 画像のサイズを指定されたストライド（ステップ）の倍数に合わせるための関数
         img_size = check_img_size(
-            DetectedObject.IMG_SIZE, s=stride)  # >> [640, 640]
+            DetectObject.IMG_SIZE, s=stride)  # >> [640, 640]
 
         # モデルの初期化
         batch_size = 1
@@ -127,7 +127,7 @@ class DetectedObject():
 
         # パディング処理
         img = letterbox(original_img,
-                        DetectedObject.IMG_SIZE,
+                        DetectObject.IMG_SIZE,
                         stride=self.stride,
                         auto=True)[0]
         img = img.transpose((2, 0, 1))[::-1]  # BGR -> RGB
@@ -210,7 +210,7 @@ if __name__ == '__main__':
     parser.add_argument("--stride", type=int, default=32, help='ストライド')
     args = parser.parse_args()
 
-    d = DetectedObject(**vars(args))
+    d = DetectObject(**vars(args))
 
     parser.add_argument("-img", "--img_path", type=str,
                         default=IMAGE_PATH/'test_image.png', help='入力画像')
@@ -218,4 +218,4 @@ if __name__ == '__main__':
                         default=save_path, help='検出画像の保存先. Noneの場合保存しない')
     args = parser.parse_args()
 
-    d.detect_objects(img_path=args.img_path, save_path=args.save_path)
+    d.detect_object(img_path=args.img_path, save_path=args.save_path)
