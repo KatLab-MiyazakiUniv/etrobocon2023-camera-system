@@ -18,6 +18,8 @@ class CameraInterface:
         Args:
             camera_id (int): カメラID
         """
+        # CAP_DSHOWを指定し、Direct Show経由でマルチメディア(映像)を扱う
+        # 参考：https://www.klv.co.jp/corner/python-opencv-video-capture.html
         self.camera = cv2.VideoCapture(camera_id, cv2.CAP_DSHOW)
         self.output_dir = "video/"
         self.video = None

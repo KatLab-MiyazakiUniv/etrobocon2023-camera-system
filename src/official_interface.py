@@ -10,7 +10,7 @@ import cv2
 class ResponseError(Exception):
     """レスポンスエラー用の例外."""
 
-    def __init__(self, message):
+    def __init__(self, message: str):
         """コンストラクタ.
 
         Args:
@@ -26,7 +26,7 @@ class OfficialInterface:
     TEAM_ID = 63                   # チームID
 
     @classmethod
-    def set_train_pwm(cls, pwm) -> bool:
+    def set_train_pwm(cls, pwm: int) -> bool:
         """IoT列車のPWM値を設定する.
 
         Args:
@@ -35,7 +35,6 @@ class OfficialInterface:
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
         """
-        success = False
         url = f"http://{cls.SERVER_IP}/train?pwm={pwm}"
         try:
             # APIにリクエストを送信
@@ -46,10 +45,11 @@ class OfficialInterface:
             success = True
         except Exception as e:
             print(e)
+            success = False
         return success
 
     @classmethod
-    def upload_snap(cls, img_path, resize_img_path) -> bool:
+    def upload_snap(cls, img_path: str, resize_img_path: str) -> bool:
         """フィグ画像をアップロードする.
 
         Args:
@@ -59,21 +59,21 @@ class OfficialInterface:
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
         """
-        success = False
         url = f"http://{cls.SERVER_IP}/snap"
+        # リクエストヘッダー
         headers = {
             "Content-Type": "image/png"
         }
-        # チームIDをリクエストに含める
+        # リクエストパラメータ
         params = {
             "id": cls.TEAM_ID
         }
 
         try:
-            # 指定された画像を開く
-            with open(img_path, "rb") as image_file:
-                cls.resize_img(img_path, resize_img_path)
-                image_data = image_file.read()
+            # 指定された画像をリサイズする
+            cls.resize_img(img_path, resize_img_path)
+            with open(resize_img_path, "rb") as resize_image_file:
+                image_data = resize_image_file.read()
             # APIにリクエストを送信
             response = requests.post(url, headers=headers,
                                      data=image_data, params=params)
@@ -83,10 +83,12 @@ class OfficialInterface:
             success = True
         except Exception as e:
             print(e)
+            success = False
         return success
 
     @classmethod
-    def resize_img(cls, img_path, save_path, resize_w, resize_h) -> None:
+    def resize_img(cls, img_path: str, save_path: str,
+                   resize_w: int, resize_h: int) -> None:
         """一枚の画像をリサイズ.
 
         Args:
