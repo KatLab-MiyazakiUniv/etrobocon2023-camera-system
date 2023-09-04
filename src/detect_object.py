@@ -30,8 +30,8 @@ from utils.general import (
 from utils.torch_utils import select_device
 from utils.augmentations import letterbox
 
-IMAGE_PATH = os.path.join(script_dir, "..", "fig_image")
-IMAGE_PATH = Path(IMAGE_PATH)
+IMAGE_DIR_PATH = os.path.join(script_dir, "..", "fig_image")
+IMAGE_DIR_PATH = Path(IMAGE_DIR_PATH)
 
 
 class DetectObject():
@@ -86,7 +86,7 @@ class DetectObject():
         return True
 
     def detect_object(self,
-                      img_path=IMAGE_PATH/'test_image.png',
+                      img_path=IMAGE_DIR_PATH/'test_image.png',
                       save_path=None) -> list:
         """物体の検出を行う関数.
 
@@ -194,9 +194,12 @@ class DetectObject():
 
 
 if __name__ == '__main__':
-    """作業用."""
+    """作業用.
+    $ poetry run python ./src/detect_object.py
+        --img_path fig_image/test_image.png
+    """
     import argparse
-    save_path = os.path.join(str(IMAGE_PATH), "detect_test_image.png")
+    save_path = os.path.join(str(IMAGE_DIR_PATH), "detect_test_image.png")
 
     parser = argparse.ArgumentParser(description="リアカメラに関するプログラム")
 
@@ -214,16 +217,18 @@ if __name__ == '__main__':
     parser.add_argument("--line_thickness", type=int,
                         default=1, help='バウンディングボックスの太さ')
     parser.add_argument("--stride", type=int, default=32, help='ストライド')
-    args = parser.parse_args()
-
-    d = DetectObject(**vars(args))
-
     parser.add_argument("-img", "--img_path", type=str,
-                        default=IMAGE_PATH/'image92.png', help='入力画像')
-    # default=IMAGE_PATH/'black_image.jpg', help='入力画像')
-    # default=IMAGE_PATH/'test_image.png', help='入力画像')
+                        default=IMAGE_DIR_PATH/'test_image.png', help='入力画像')
     parser.add_argument("-spath", "--save_path", type=str,
                         default=save_path, help='検出画像の保存先. Noneの場合保存しない')
     args = parser.parse_args()
 
-    d.detect_object(img_path=args.img_path, save_path=args.save_path)
+    d = DetectObject(args.weights,
+                     args.label_data,
+                     args.conf_thres,
+                     args.iou_thres,
+                     args.max_det,
+                     args.line_thickness,
+                     args.stride)
+
+    d.detect_object(args.img_path, args.save_path)

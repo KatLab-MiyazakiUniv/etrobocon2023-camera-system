@@ -12,9 +12,48 @@ class ImageProcessing:
 
     NOTE:
         以下の関数を保持.
-        ・画像のリサイズ(resize_img)
         ・画像の鮮明化(sharpen_image)
+        ・画像のリサイズ(resize_img)
     """
+
+    @staticmethod
+    def sharpen_image(img_path: str, save_path=None) -> np.ndarray:
+        """画像の鮮明化を行う関数.
+
+        手法：カラー画像のアンシャープマスク
+
+        Args:
+            image_path(str): 鮮明化する画像パス
+            save_path(str): 鮮明化した画像の保存先パス
+                            パス指定がない場合保存しない
+        Return:
+            result(np.ndarray): 鮮明化後画像
+
+        Raises:
+            FileNotFoundError: 画像が見つからない場合に発生
+        """
+        try:
+            # 読み込み
+            img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
+
+            if img is None:
+                raise FileNotFoundError(f"'{img_path}' is not found")
+
+            # アンシャープマスクを適用
+            blurred = cv2.GaussianBlur(img, (0, 0), 2)  # ぼかし処理
+            # 引数: 元画像, 元の画像に対する加重係数（強度）
+            #       ブラー画像, ブラー画像に対する減重係数(強度), 画像の明るさ(0は無視)
+            result = cv2.addWeighted(img, 2.5, blurred, -1.5, 0)  # 差分から鮮明化
+            if save_path:
+                os.makedirs(os.path.dirname(save_path), exist_ok=True)
+                # 出力画像を保存
+                cv2.imwrite(save_path, result)
+
+        except FileNotFoundError as e:
+            print("Error:", e)
+            return None
+
+        return result
 
     @staticmethod
     def resize_img(img_path: str,
@@ -52,56 +91,44 @@ class ImageProcessing:
                 # 出力画像を保存
                 cv2.imwrite(save_path, resized_img)
 
-            return resized_img
-
         except FileNotFoundError as e:
             print("Error:", e)
+            return None
 
-    @staticmethod
-    def sharpen_image(img_path: str, save_path=None) -> np.ndarray:
-        """画像の鮮明化を行う関数.
-
-        手法：カラー画像のアンシャープマスク
-
-        Args:
-            image_path(str): 鮮明化する画像パス
-            save_path(str): 鮮明化した画像の保存先パス
-                            パス指定がない場合保存しない
-        Return:
-            result(np.ndarray): 鮮明化後画像
-
-        Raises:
-            FileNotFoundError: 画像が見つからない場合に発生
-        """
-        try:
-            # 読み込み
-            img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
-
-            if img is None:
-                raise FileNotFoundError(f"'{img_path}' is not found")
-
-            # アンシャープマスクを適用
-            blurred = cv2.GaussianBlur(img, (0, 0), 2)  # ぼかし処理
-            # 引数: 元画像, 元の画像に対する加重係数（強度）
-            #       ブラー画像, ブラー画像に対する減重係数(強度), 画像の明るさ(0は無視)
-            result = cv2.addWeighted(img, 2.5, blurred, -1.5, 0)  # 差分から鮮明化
-            if save_path:
-                os.makedirs(os.path.dirname(save_path), exist_ok=True)
-                # 出力画像を保存
-                cv2.imwrite(save_path, result)
-            return result
-
-        except FileNotFoundError as e:
-            print("Error:", e)
+        return resized_img
 
 
 if __name__ == '__main__':
-    """作業用."""
-    IMAGE_PATH = os.path.join("..", "fig_image")
-    image_path = os.path.join(IMAGE_PATH, "test_image.png")
-    save_resize_img_path = os.path.join(IMAGE_PATH, "resize_test_image.png")
-    save_shaped_img_path = os.path.join(IMAGE_PATH, "shaped_fig.png")
+    """作業用.
+    $ poetry run python ./src/image_processing.py --resize 640 480 --sharpen
+    """
+    import argparse
+    from pathlib import Path
 
-    ImageProcessing.resize_img(image_path, save_resize_img_path)
-    ImageProcessing.sharpen_image(image_path, save_shaped_img_path)
-    print('完了')
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    IMAGE_DIR_PATH = os.path.join(script_dir, "..", "fig_image")
+    IMAGE_DIR_PATH = Path(IMAGE_DIR_PATH)
+
+    parser = argparse.ArgumentParser(description="リアカメラに関するプログラム")
+
+    parser.add_argument("--sharpen", action='store_true',
+                        help='重みファイルパス')
+    parser.add_argument("--resize", nargs='+', type=int,
+                        help='リサイズする画像サイズ(高さ, 幅)')
+    parser.add_argument("-img", "--img_path", type=str,
+                        default=IMAGE_DIR_PATH/'test_image.png', help='入力画像')
+    parser.add_argument("-spath", "--save_path", type=str,
+                        default=IMAGE_DIR_PATH/'processed_test_image.png',
+                        help='画像処理後の保存先パス')
+
+    args = parser.parse_args()
+
+    if args.sharpen:
+        ImageProcessing.sharpen_image(str(args.img_path), str(args.save_path))
+        args.img_path = args.save_path
+
+    if args.resize:
+        ImageProcessing.resize_img(str(args.img_path),
+                                   str(args.save_path),
+                                   args.resize[0],
+                                   args.resize[1])
