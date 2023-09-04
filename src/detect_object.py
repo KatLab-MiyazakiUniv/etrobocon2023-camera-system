@@ -87,7 +87,7 @@ class DetectObject():
 
     def detect_object(self,
                       img_path=IMAGE_DIR_PATH/'test_image.png',
-                      save_path=None) -> list:
+                      save_path=None) -> (bool, list):
         """物体の検出を行う関数.
 
         Args:
@@ -95,11 +95,13 @@ class DetectObject():
             save_path(str): 検出結果の画像保存パス
                             Noneの場合、保存しない
         Returns:
-            bool: 入力ファイルがなかった場合、Falseを返す
+            bool: 検出を行えたらTrue、画像ファイルがなかったらFalse
             list: 正常に物体検出を行った場合、予測結果を返す
         """
+        success = False
+
         if not self.check_exist(img_path):
-            return False
+            return success, []
 
         # cpuを指定
         device = select_device(DetectObject.DEVICE)
@@ -170,27 +172,29 @@ class DetectObject():
             objects[:, :4] = scale_boxes(
                 img.shape[2:], objects[:, :4], save_img.shape).round()
 
-            # xyxy: バウンディングボックスの座標([x_min, y_min, x_max, y_max] 形式)
-            # conf: 信頼度
-            # cls: クラスID
-            if save_path:
+            if save_path is not None:
+                print("aaa")
+                # xyxy: バウンディングボックスの座標([x_min, y_min, x_max, y_max] 形式)
+                # conf: 信頼度
+                # cls: クラスID
                 for *xyxy, conf, cls in reversed(objects):
                     c = int(cls)
                     label = f'{labels[int(cls)]} {conf:.2f}'
                     # 画像にバウンディングボックスとラベルを追加
                     annotator.box_label(xyxy, label, color=colors(c, True))
 
-        # 検出結果を含む画像を保存
-        save_img = annotator.result()
-        cv2.imwrite(save_path, save_img)
+                # 検出結果を含む画像を保存
+                save_img = annotator.result()
+                cv2.imwrite(save_path, save_img)
 
+        success = True
         """
         NOTE:
             objectsの型について
              行数:検出数
              列数:6列([x_min, y_min, x_max, y_max, conf, cls])
         """
-        return objects
+        return success, objects
 
 
 if __name__ == '__main__':
@@ -232,3 +236,5 @@ if __name__ == '__main__':
                      args.stride)
 
     d.detect_object(args.img_path, args.save_path)
+
+    print("完了")
