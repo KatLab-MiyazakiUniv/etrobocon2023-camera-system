@@ -46,7 +46,7 @@ class DetectObject():
                  conf_thres=0.6,
                  iou_thres=0.45,
                  max_det=10,
-                 line_thickness=3,
+                 line_thickness=1,
                  stride=32):
         """コンストラクタ.
 
@@ -155,36 +155,42 @@ class DetectObject():
                                    )
 
         # 検出結果を画像に描画
-        if save_path:
-            for det in pred:  # det:検出結果
-                print(Path(img_path).name, " 検出数", len(det))
+        objects = pred[0]
+        print(Path(img_path).name, " 検出数", len(objects))
 
-                save_img = original_img.copy()
+        save_img = original_img.copy()
 
-                # 画像にバウンディングボックスやラベルなどのアノテーションを追加
-                annotator = Annotator(save_img,
-                                      line_width=self.line_thickness,
-                                      example=str(labels))
+        # 画像にバウンディングボックスやラベルなどのアノテーションを追加
+        annotator = Annotator(save_img,
+                              line_width=self.line_thickness,
+                              example=str(labels))
 
-                if len(det):
-                    # バウンディングボックス座標を画像サイズから別のサイズに変換
-                    det[:, :4] = scale_boxes(
-                        img.shape[2:], det[:, :4], save_img.shape).round()
+        if len(objects):
+            # バウンディングボックスをimgサイズからsave_imgサイズに再スケールします
+            objects[:, :4] = scale_boxes(
+                img.shape[2:], objects[:, :4], save_img.shape).round()
 
-                    # xyxy: バウンディングボックスの座標([x_min, y_min, x_max, y_max] 形式)
-                    # conf: 信頼度
-                    # cls: クラスID
-                    for *xyxy, conf, cls in reversed(det):
-                        c = int(cls)
-                        label = f'{labels[int(cls)]} {conf:.2f}'
-                        # 画像にバウンディングボックスとラベルを追加
-                        annotator.box_label(xyxy, label, color=colors(c, True))
+            # xyxy: バウンディングボックスの座標([x_min, y_min, x_max, y_max] 形式)
+            # conf: 信頼度
+            # cls: クラスID
+            if save_path:
+                for *xyxy, conf, cls in reversed(objects):
+                    c = int(cls)
+                    label = f'{labels[int(cls)]} {conf:.2f}'
+                    # 画像にバウンディングボックスとラベルを追加
+                    annotator.box_label(xyxy, label, color=colors(c, True))
 
-            # 検出結果を含む画像を保存
-            save_img = annotator.result()
-            cv2.imwrite(save_path, save_img)
+        # 検出結果を含む画像を保存
+        save_img = annotator.result()
+        cv2.imwrite(save_path, save_img)
 
-        return pred
+        """
+        NOTE:
+            objectsの型について
+             行数:検出数
+             列数:6列([x_min, y_min, x_max, y_max, conf, cls])
+        """
+        return objects
 
 
 if __name__ == '__main__':
@@ -206,14 +212,16 @@ if __name__ == '__main__':
                         default=0.45, help='IOU 閾値')
     parser.add_argument("--max_det", type=int, default=10, help='最大検出数')
     parser.add_argument("--line_thickness", type=int,
-                        default=3, help='バウンディングボックスの太さ')
+                        default=1, help='バウンディングボックスの太さ')
     parser.add_argument("--stride", type=int, default=32, help='ストライド')
     args = parser.parse_args()
 
     d = DetectObject(**vars(args))
 
     parser.add_argument("-img", "--img_path", type=str,
-                        default=IMAGE_PATH/'test_image.png', help='入力画像')
+                        default=IMAGE_PATH/'image92.png', help='入力画像')
+    # default=IMAGE_PATH/'black_image.jpg', help='入力画像')
+    # default=IMAGE_PATH/'test_image.png', help='入力画像')
     parser.add_argument("-spath", "--save_path", type=str,
                         default=save_path, help='検出画像の保存先. Noneの場合保存しない')
     args = parser.parse_args()

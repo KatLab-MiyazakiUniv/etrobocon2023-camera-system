@@ -1,5 +1,7 @@
 """画像処理クラスのテスト.
 
+実際に使う重みファイルは容量が大きいため軽い重みファイルを使用してテストを行う。
+
 @author: kawanoichi
 """
 from src.detect_object import DetectObject
@@ -28,8 +30,6 @@ class TestImageProcessing:
 
     def test_detect(self):
         """物体検出のテスト."""
-        pred = self.detect.detect_object(self.img_path, self.save_path)
-        assert pred is not False
-        det = pred[0]
-        assert len(det) == 1
+        objects = self.detect.detect_object(self.img_path, self.save_path)
+        assert len(objects) == 1
         assert os.path.exists(self.save_path)
