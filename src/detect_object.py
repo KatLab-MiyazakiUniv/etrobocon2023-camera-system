@@ -18,7 +18,6 @@ import os
 import numpy as np
 import sys
 from ultralytics.utils.plotting import Annotator, colors
-import warnings
 
 script_dir = os.path.dirname(os.path.abspath(__file__))  # noqa
 YOLO_PATH = os.path.join(script_dir, "..", "yolo")  # noqa
