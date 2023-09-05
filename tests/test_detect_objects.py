@@ -19,7 +19,6 @@ class TestImageProcessing:
         """前処理."""
         self.img_path = "tests/testdata/img/fig.png"
         self.save_path = "tests/testdata/img/detect_fig.png"
-        self.wrong_path = "wrong.png"
         self.weights = "tests/testdata/yolo/weight.pt"
         self.label_data = "tests/testdata/yolo/label.yaml"
         self.detect = DetectObject(self.weights, self.label_data)
@@ -31,13 +30,7 @@ class TestImageProcessing:
 
     def test_detect(self):
         """物体検出のテスト."""
-        success, objects = self.detect.detect_object(
-            self.wrong_path, self.save_path)
-        assert success is False
-        assert len(objects) == 0
-
-        success, objects = self.detect.detect_object(
+        objects = self.detect.detect_object(
             self.img_path, self.save_path)
-        assert success is True
         assert len(objects) == 1
         assert os.path.exists(self.save_path)

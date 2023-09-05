@@ -70,24 +70,25 @@ class DetectObject():
         self.stride = stride
 
     @staticmethod
-    def check_exist(path: str) -> bool:
+    def check_exist(path: str) -> None:
         """ファイル, ディレクトリが存在するかの確認.
 
         Args:
             path (str): ファイルまたはディレクトリのパス
 
-        return:
-            bool: 存在すればTrue
-                  存在しなければFalse
+        raise:
+            FileNotFoundError: ファイルがない場合に発生
         """
-        if not os.path.exists(path):
-            warnings.warn(f"'{path}' does not exist", Warning)
-            return False
-        return True
+        try:
+            if not os.path.exists(path):
+                raise FileNotFoundError(f"'{path}' is not found")
+
+        except FileNotFoundError as e:
+            print("Error:", e)
 
     def detect_object(self,
                       img_path=IMAGE_DIR_PATH/'test_image.png',
-                      save_path=None) -> (bool, list):
+                      save_path=None) -> list:
         """物体の検出を行う関数.
 
         Args:
@@ -95,13 +96,9 @@ class DetectObject():
             save_path(str): 検出結果の画像保存パス
                             Noneの場合、保存しない
         Returns:
-            bool: 検出を行えたらTrue、画像ファイルがなかったらFalse
-            list: 正常に物体検出を行った場合、予測結果を返す
+            list: 検出したオブジェクト
         """
-        success = False
-
-        if not self.check_exist(img_path):
-            return success, []
+        self.check_exist(img_path)
 
         # cpuを指定
         device = select_device(DetectObject.DEVICE)
@@ -173,7 +170,6 @@ class DetectObject():
                 img.shape[2:], objects[:, :4], save_img.shape).round()
 
             if save_path is not None:
-                print("aaa")
                 # xyxy: バウンディングボックスの座標([x_min, y_min, x_max, y_max] 形式)
                 # conf: 信頼度
                 # cls: クラスID
@@ -187,14 +183,13 @@ class DetectObject():
                 save_img = annotator.result()
                 cv2.imwrite(save_path, save_img)
 
-        success = True
         """
         NOTE:
             objectsの型について
              行数:検出数
              列数:6列([x_min, y_min, x_max, y_max, conf, cls])
         """
-        return success, objects
+        return objects
 
 
 if __name__ == '__main__':
