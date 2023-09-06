@@ -16,7 +16,7 @@ IMAGE_NAME="$2"
 REMOTE_DIRECTORY="./fig_image/"
 
 # SSH経由で画像を転送
-scp "$REMOTE_USER@$REMOTE_IP:~/work/RasPike/sdk/workspace/strobocon2023/rear_camera_py/image_data/$IMAGE_NAME" "$REMOTE_DIRECTORY"
+scp "$REMOTE_USER@$REMOTE_IP:~/work/RasPike/sdk/workspace/etrobocon2023/rear_camera_py/image_data/$IMAGE_NAME" "$REMOTE_DIRECTORY"
 
 # スクリプトの終了
 exit 0
