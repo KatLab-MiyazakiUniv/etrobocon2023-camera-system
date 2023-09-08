@@ -11,30 +11,23 @@ from image_processing import ImageProcessing
 from official_interface import OfficialInterface
 
 
-def work_rm(file_path):
-    try:
-        # ファイルを削除
-        os.remove(file_path)
-    except FileNotFoundError:
-        pass
-
-
 class RoboSnap:
     """ロボコンスナップクラス."""
 
     __IMAGE_LIST = ["FigA_1.png",
-                 "FigB.png",
-                 "FigA_2.png",
-                 "FigA_3.png",
-                 "FigA_4.png"]
-    # Fig_IMAGE = ["FigA_1.png",
-    #              "FigA_2.png",
-    #              "FigA_3.png",
-    #              "FigA_4.png",
-    #              "FigB.png"]
-    
-    __Fig_IMAGE_B = "FigB.png"
-    
+                    "FigB.png",
+                    "FigA_2.png",
+                    "FigA_3.png",
+                    "FigA_4.png"]
+
+    # __IMAGE_LIST = ["FigA_1.png",
+    #                 "FigA_2.png",
+    #                 "FigA_3.png",
+    #                 "FigA_4.png",
+    #                 "FigB.png"]
+
+    __Fig_IMAGE_B = __IMAGE_LIST[1]
+
     __DETECT_LABLE = {
         "Fig": 0,
         "FrontalFace": 1,
@@ -45,11 +38,10 @@ class RoboSnap:
     __IMAGE_DIR_PATH = os.path.join(PROJECT_DIR_PATH, "fig_image")
 
     def __init__(self,
-                 remote_ip="192.168.11.16"
+                 raspike_ip="192.168.11.16",
                  ) -> None:
         """コンストラクタ."""
-        self.remote_ip = remote_ip
-        self.conf_thred = 0.7
+        self.raspike_ip = raspike_ip
         self.candidate_best_image = None
         self.candidate_nice_image = None
         self.candidate_image_2 = None
@@ -60,7 +52,7 @@ class RoboSnap:
         """bashファイルを実行する関数."""
         for img in self.__IMAGE_LIST:
             pass
-            # args = [self.__BASH_PATH, self.remote_ip, img]
+            # args = [self.__BASH_PATH, self.raspike_ip, img]
             # try:
             #     subprocess.run(args, check=True)
             # except subprocess.CalledProcessError as e:
@@ -94,13 +86,8 @@ class RoboSnap:
             検出項目:
                 0: "Fig", 1: "FrontalFace", 2: "Profile"
 
-            優先度:
-                5    : ベストショット確定(撮影動作Skip)
-                2 ~ 4: 保留(最後に比較)
-                1    : pass
-
-            検出が 
-                0 and 1: 5pt (ベストショット)
+            スコア定義
+                0 and 1: 5pt ベストショット確定(撮影動作Skip)
                 0 and 2: 4pt (もしかしたらベストショット)
                 0      : 3pt (ナイスショット)
                 1      : 2pt
@@ -115,7 +102,7 @@ class RoboSnap:
         if self.__DETECT_LABLE["Fig"] in cls \
                 and self.__DETECT_LABLE["FrontalFace"] in cls:
             return 5
-        
+
         if self.__DETECT_LABLE["Fig"] in cls \
                 and self.__DETECT_LABLE["Profile"] in cls:
             return 4
@@ -134,7 +121,6 @@ class RoboSnap:
 
     def start(self) -> None:
         """ロボコンスナップを攻略する."""
-
         # 物体検出のパラメータはデフォルト通り
         d = DetectObject()
 
@@ -173,16 +159,15 @@ class RoboSnap:
             # 物体検出
             save_path = os.path.join(self.__IMAGE_DIR_PATH, "detected_"+img)
             objects = d.detect_object(processed_image_path, save_path)
-            
+
             # ベストショット画像らしさスコア算出
             score = self.check_bestshot(objects)
-            
-            print("score: ", score)
 
+            print("score: ", score)
 
             if score == 5:
                 # TODO:撮影動作を終了
-                # flag = False
+                flag = False
                 # OfficialInterface.upload_snap(processed_image_path)
                 print("ベストショット！！")
                 break
@@ -222,7 +207,6 @@ class RoboSnap:
                 print("candidate_image_0")
                 # OfficialInterface.upload_snap(self.candidate_image_0)
                 pass
-
 
 
 if __name__ == "__main__":
