@@ -7,6 +7,8 @@ help:
 	@echo " $$ make format"
 	@echo "全てのソースコードのスタイルをチェックする"
 	@echo " $$ make check_style"
+	@echo "test, format, check_styleを行う"
+	@echo " $$ make all"
 	@echo "カバレッジレポートの表示"
 	@echo " $$ make coverage"
 
@@ -14,7 +16,7 @@ run:
 	poetry run python src
 
 test:
-	poetry run pytest
+	poetry run pytest -W ignore::DeprecationWarning
 
 format:
 	poetry run python -m autopep8 -i -r src/ tests/
@@ -27,3 +29,7 @@ coverage:
 	poetry run coverage run -m pytest
 	poetry run coverage report -i
 
+all:
+	make format
+	make test
+	make check_style

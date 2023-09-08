@@ -1,10 +1,10 @@
 """競技システムインタフェース.
 
 競技システムとの通信を行うクラス.
-@author: miyashita64
+@author: miyashita64 kawanoichi
 """
 import requests
-import cv2
+from image_processing import ImageProcessing
 
 
 class ResponseError(Exception):
@@ -64,7 +64,12 @@ class OfficialInterface:
         headers = {
             "Content-Type": "image/png"
         }
-        # リクエストパラメータ
+
+        # 指定された画像をリクエストに含める
+        ImageProcessing.resize_img(img_path, resize_img_path, 640, 480)
+        with open(resize_img_path, "rb") as image_file:
+            image_data = image_file.read()
+        # チームIDをリクエストに含める
         params = {
             "id": cls.TEAM_ID
         }
@@ -85,21 +90,3 @@ class OfficialInterface:
             print(e)
             success = False
         return success
-
-    @classmethod
-    def resize_img(cls, img_path: str, save_path: str,
-                   resize_w: int, resize_h: int) -> None:
-        """一枚の画像をリサイズ.
-
-        Args:
-            img_path (string): リサイズする画像のパス
-            save_path (string): リサイズした画像を保存するパス
-            resize_w (int): リサイズする画像の幅
-            resize_h (int): リサイズする画像の高さ
-        """
-        # 読み込み
-        img = cv2.imread(img_path, cv2.IMREAD_UNCHANGED)
-        height, width, _ = img.shape
-        # リサイズ
-        resized_img = cv2.resize(img, (resize_w, resize_h))
-        cv2.imwrite(save_path, resized_img)
