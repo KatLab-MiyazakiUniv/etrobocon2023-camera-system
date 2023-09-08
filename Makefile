@@ -33,3 +33,13 @@ all:
 	make format
 	make test
 	make check_style
+
+snap:
+	poetry run python src/robocon_snap.py
+
+detect:
+	poetry run python src/detect_object.py
+
+rm:
+	del fig_image/detected_Fig*.png
+	del fig_image/processed_Fig*.png

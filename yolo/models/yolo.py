@@ -1,10 +1,11 @@
 
-from utils.torch_utils import (fuse_conv_and_bn, initialize_weights, model_info, profile, scale_img, select_device,
-                               time_sync)
+# from utils.torch_utils import (fuse_conv_and_bn, initialize_weights, model_info, profile, scale_img, select_device,
+from utils.torch_utils import (fuse_conv_and_bn, initialize_weights, model_info, scale_img, time_sync)
 from utils.plots import feature_visualization
-from utils.general import LOGGER, check_version, check_yaml, make_divisible, print_args
+from utils.general import LOGGER, check_version, make_divisible
+# from utils.general import LOGGER, check_version, check_yaml, make_divisible, print_args
 from utils.autoanchor import check_anchor_order
-import argparse
+# import argparse
 import contextlib
 import os
 import platform
@@ -147,7 +148,7 @@ class BaseModel(nn.Module):
             LOGGER.info(f"{sum(dt):10.2f} {'-':>10s} {'-':>10s}  Total")
 
     def fuse(self):  # fuse model Conv2d() + BatchNorm2d() layers
-        LOGGER.info('Fusing layers... ')
+        # LOGGER.info('Fusing layers... ')
         for m in self.model.modules():
             if isinstance(m, (Conv, DWConv)) and hasattr(m, 'bn'):
                 m.conv = fuse_conv_and_bn(m.conv, m.bn)  # update conv
@@ -390,6 +391,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
     return nn.Sequential(*layers), sorted(save)
 
 
+"""
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cfg', type=str,
@@ -429,3 +431,5 @@ if __name__ == '__main__':
 
     else:  # report fused model summary
         model.fuse()
+
+"""

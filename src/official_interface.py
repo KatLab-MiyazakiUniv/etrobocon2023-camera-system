@@ -49,7 +49,7 @@ class OfficialInterface:
         return success
 
     @classmethod
-    def upload_snap(cls, img_path: str, resize_img_path: str) -> bool:
+    def upload_snap(cls, img_path: str, resize_img_path=None) -> bool:
         """フィグ画像をアップロードする.
 
         Args:
@@ -66,7 +66,9 @@ class OfficialInterface:
         }
 
         # 指定された画像をリクエストに含める
-        ImageProcessing.resize_img(img_path, resize_img_path, 640, 480)
+        if resize_img_path is not None:
+            ImageProcessing.resize_img(img_path, resize_img_path, 640, 480)
+        
         with open(resize_img_path, "rb") as image_file:
             image_data = image_file.read()
         # チームIDをリクエストに含める
