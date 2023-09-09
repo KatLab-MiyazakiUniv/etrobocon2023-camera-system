@@ -42,11 +42,7 @@ class RoboSnap:
                  ) -> None:
         """コンストラクタ."""
         self.raspike_ip = raspike_ip
-        self.candidate_best_image = None
-        self.candidate_nice_image = None
-        self.candidate_image_2 = None
-        self.candidate_image_1 = None
-        self.candidate_image_0 = None
+        self.candidate_image = None
 
     def execute_bash(self):
         """bashファイルを実行する関数."""
@@ -124,8 +120,9 @@ class RoboSnap:
         # 物体検出のパラメータはデフォルト通り
         d = DetectObject()
 
-        flag = True
+        sent_to_official = False
         while len(self.__IMAGE_LIST):  # 全てのファイルの物体検出が終わるまでループ
+            pre_score = -1
             while True:  # 画像が見つかるまでループ
                 # 画像の受信試み
                 self.execute_bash()
@@ -153,9 +150,6 @@ class RoboSnap:
                 # OfficialInterface.upload_snap(processed_image_path)
                 continue
 
-            else:
-                self.candidate_image_0 = processed_image_path
-
             # 物体検出
             save_path = os.path.join(self.__IMAGE_DIR_PATH, "detected_"+img)
             objects = d.detect_object(processed_image_path, save_path)
@@ -167,49 +161,22 @@ class RoboSnap:
 
             if score == 5:
                 # TODO:撮影動作を終了
-                flag = False
-                # OfficialInterface.upload_snap(processed_image_path)
                 print("ベストショット！！")
+                # OfficialInterface.upload_snap(processed_image_path)
+                sent_to_official = True
                 break
-            elif score == 4:
-                self.candidate_best_image = processed_image_path
-                print("ベストショット？")
-            elif score == 3:
-                self.candidate_nice_image = processed_image_path
-                print("ベストショット")
-            elif score == 2:
-                if self.candidate_image_2 is None:
-                    self.candidate_image_2 = processed_image_path
-                print("候補")
-            elif score == 1:
-                if self.candidate_image_1 is None:
-                    self.candidate_image_1 = processed_image_path
-                print("候補")
 
-        if flag:
-            if self.candidate_best_image is not None:
-                print("candidate_best_image")
-                # OfficialInterface.upload_snap(self.candidate_best_image)
-                pass
-            elif self.candidate_nice_image is not None:
-                print("candidate_nice_image")
-                # OfficialInterface.upload_snap(self.candidate_nice_image)
-                pass
-            elif self.candidate_image_2 is not None:
-                print("candidate_image_2")
-                # OfficialInterface.upload_snap(self.candidate_image_2)
-                pass
-            elif self.candidate_image_1 is not None:
-                print("candidate_image_1")
-                # OfficialInterface.upload_snap(self.candidate_image_1)
-                pass
-            else:
-                print("candidate_image_0")
-                # OfficialInterface.upload_snap(self.candidate_image_0)
-                pass
+            elif score > pre_score:
+                self.candidate_image = processed_image_path
+                pre_score = score
+
+        if sent_to_official is False:
+            print("candidate_best_image")
+            # OfficialInterface.upload_snap(self.candidate_best_image)
 
 
 if __name__ == "__main__":
+    """作業用."""
     snap = RoboSnap()
     snap.start()
     print("終了")

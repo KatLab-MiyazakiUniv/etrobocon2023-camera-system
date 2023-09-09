@@ -68,7 +68,7 @@ class OfficialInterface:
         # 指定された画像をリクエストに含める
         if resize_img_path is not None:
             ImageProcessing.resize_img(img_path, resize_img_path, 640, 480)
-
+        
         with open(resize_img_path, "rb") as image_file:
             image_data = image_file.read()
         # チームIDをリクエストに含める
