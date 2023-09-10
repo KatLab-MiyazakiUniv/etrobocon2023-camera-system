@@ -14,18 +14,18 @@ from official_interface import OfficialInterface
 class RoboSnap:
     """ロボコンスナップ攻略クラス."""
 
-    __IMAGE_LIST = ["FigA_1.png",
-                    "FigA_2.png",
-                    "FigA_3.png",
-                    "FigA_4.png",
-                    "FigB.png"]
+    __IMG_LIST = ["FigA_1.png",
+                  "FigA_2.png",
+                  "FigA_3.png",
+                  "FigA_4.png",
+                  "FigB.png"]
 
-    __Fig_IMAGE_B = "FigB.png"
+    __Fig_IMG_B = "FigB.png"
 
     # NOTE:powershellの場合絶対パスでbashファイルが実行できない
     #      よってcamera-system下での実装に対応
     __BASH_PATH = os.path.join("copy_fig.sh")
-    __IMAGE_DIR_PATH = os.path.join(PROJECT_DIR_PATH, "fig_image")
+    __IMG_DIR_PATH = os.path.join(PROJECT_DIR_PATH, "fig_image")
 
     def __init__(self,
                  raspike_ip="192.168.11.16",
@@ -36,11 +36,11 @@ class RoboSnap:
             raspike_ip: 走行体のIPアドレス
         """
         self.raspike_ip = raspike_ip
-        self.candidate_image = None
+        self.candidate_img_path = None
 
     def execute_bash(self) -> None:
         """bashファイルを実行する関数."""
-        for img in self.__IMAGE_LIST:
+        for img in self.__IMG_LIST:
             bash_command = f"bash {self.__BASH_PATH} {self.raspike_ip} {img}"
             try:
                 os.system(bash_command)
@@ -52,14 +52,14 @@ class RoboSnap:
         """画像が送られてきたかどうかの確認関数.
 
         Returns:
-            img     (str): 画像ファイル名
+            img_name     (str): 画像ファイル名
             img_path(str): 画像パス
         """
-        for img in self.__IMAGE_LIST:
-            img_path = os.path.join(self.__IMAGE_DIR_PATH, img)
+        for img_name in self.__IMG_LIST:
+            img_path = os.path.join(self.__IMG_DIR_PATH, img_name)
             if os.path.exists(img_path):
-                self.__IMAGE_LIST.remove(img)
-                return img, img_path
+                self.__IMG_LIST.remove(img_name)
+                return img_name, img_path
         return None, None
 
     def check_bestshot(self, objects) -> int:
@@ -137,52 +137,53 @@ class RoboSnap:
         d = DetectObject()
 
         sent_to_official = False
-        while len(self.__IMAGE_LIST):  # 全てのファイルの物体検出が終わるまでループ
+        while len(self.__IMG_LIST):  # 全てのファイルの物体検出が終わるまでループ
             pre_score = -1
             while True:  # 画像が見つかるまでループ
                 # 画像の受信試み
                 self.execute_bash()
 
                 # 受信できたか確認
-                img, fig_image_path = self.exist_image()
-                if fig_image_path is not None:
+                img_name, img_path = self.exist_image()
+                if img_path is not None:
                     break
                 time.sleep(2)
 
             # # 鮮明化
-            processed_image_path = os.path.join(
-                self.__IMAGE_DIR_PATH, "processed_"+img)
-            ImageProcessing.sharpen_image(img_path=fig_image_path,
-                                          save_path=processed_image_path)
+            processed_img_path = os.path.join(
+                self.__IMG_DIR_PATH, "processed_"+img_name)
+            ImageProcessing.sharpen_image(img_path=img_path,
+                                          save_path=processed_img_path)
 
             # # リサイズ
-            ImageProcessing.resize_img(img_path=processed_image_path,
-                                       save_path=processed_image_path)
+            ImageProcessing.resize_img(img_path=processed_img_path,
+                                       save_path=processed_img_path)
 
-            if img == self.__Fig_IMAGE_B:
+            if img_name == self.__Fig_IMG_B:
                 # 配置エリアBの画像は検出せずにアップロード
-                OfficialInterface.upload_snap(processed_image_path)
+                OfficialInterface.upload_snap(processed_img_path)
                 continue
 
             # 物体検出
-            save_path = os.path.join(self.__IMAGE_DIR_PATH, "detected_"+img)
-            objects = d.detect_object(processed_image_path, save_path)
+            save_path = os.path.join(
+                self.__IMG_DIR_PATH, "detected_"+img_name)
+            objects = d.detect_object(processed_img_path, save_path)
 
             # ベストショット画像らしさスコア算出
             score = self.check_bestshot(objects)
 
             if score == 5:
                 # TODO:撮影動作をフラグ書き換える
-                OfficialInterface.upload_snap(processed_image_path)
+                OfficialInterface.upload_snap(processed_img_path)
                 sent_to_official = True
                 break
 
             elif score > pre_score:
-                self.candidate_image = processed_image_path
+                self.candidate_img_path = processed_img_path
                 pre_score = score
 
         if sent_to_official is False:
-            OfficialInterface.upload_snap(self.candidate_best_image)
+            OfficialInterface.upload_snap(self.candidate_best_img)
 
 
 if __name__ == "__main__":
