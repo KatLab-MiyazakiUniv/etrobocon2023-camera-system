@@ -183,7 +183,7 @@ class RoboSnap:
                 pre_score = score
 
         if sent_to_official is False:
-            OfficialInterface.upload_snap(self.candidate_best_img)
+            OfficialInterface.upload_snap(self.candidate_img_path)
 
 
 if __name__ == "__main__":
