@@ -12,3 +12,6 @@ video/*
 *.jpg
 *.txt
 *.pt
+
+# テスト
+!tests/testdata/*

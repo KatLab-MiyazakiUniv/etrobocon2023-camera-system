@@ -34,8 +34,9 @@ all:
 	make test
 	make check_style
 
+# 以下は作業終わりに消します。
 snap:
-	poetry run python src/robocon_snap.py
+	poetry run python src/robo_snap.py
 
 detect:
 	poetry run python src/detect_object.py
