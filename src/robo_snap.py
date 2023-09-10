@@ -15,16 +15,10 @@ class RoboSnap:
     """ロボコンスナップクラス."""
 
     __IMAGE_LIST = ["FigA_1.png",
-                    "FigB.png",
                     "FigA_2.png",
                     "FigA_3.png",
-                    "FigA_4.png"]
-
-    # __IMAGE_LIST = ["FigA_1.png",
-    #                 "FigA_2.png",
-    #                 "FigA_3.png",
-    #                 "FigA_4.png",
-    #                 "FigB.png"]
+                    "FigA_4.png",
+                    "FigB.png"]
 
     __Fig_IMAGE_B = __IMAGE_LIST[1]
 
