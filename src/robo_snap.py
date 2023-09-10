@@ -12,28 +12,15 @@ from official_interface import OfficialInterface
 
 
 class RoboSnap:
-    """ロボコンスナップクラス."""
+    """ロボコンスナップ攻略クラス."""
 
-    # __IMAGE_LIST = ["FigA_1.png",
-    #                 "FigA_2.png",
-    #                 "FigA_3.png",
-    #                 "FigA_4.png",
-    #                 "FigB.png"]
     __IMAGE_LIST = ["FigA_1.png",
                     "FigA_2.png",
+                    "FigA_3.png",
                     "FigA_4.png",
-                    "FigB.png",
-                    "FigA_3.png"
-                    ]
-    
+                    "FigB.png"]
 
     __Fig_IMAGE_B = "FigB.png"
-
-    __DETECT_LABLE = {
-        "Fig": 0,
-        "FrontalFace": 1,
-        "Profile": 2
-    }
 
     # NOTE:powershellの場合絶対パスでbashファイルが実行できない
     #      よってcamera-system下での実装に対応
@@ -73,7 +60,7 @@ class RoboSnap:
             if os.path.exists(img_path):
                 self.__IMAGE_LIST.remove(img)
                 return img, img_path
-        return None
+        return None, None
 
     def check_bestshot(self, objects) -> int:
         """ベストショット画像らしさスコアの算出.
@@ -103,10 +90,10 @@ class RoboSnap:
                 others  : 0pt
         """
         objects_np = np.array(objects)
-        index_of_label_0 = np.where(objects_np[:,5] == 0)
-        index_of_label_1 = np.where(objects_np[:,5] == 1)
-        index_of_label_2 = np.where(objects_np[:,5] == 2)
-        
+        index_of_label_0 = np.where(objects_np[:, 5] == 0)
+        index_of_label_1 = np.where(objects_np[:, 5] == 1)
+        index_of_label_2 = np.where(objects_np[:, 5] == 2)
+
         if index_of_label_0[0].size > 0 \
                 and index_of_label_1[0].size > 0:
             # 2つのボックスが重なっているかを確認
@@ -114,12 +101,12 @@ class RoboSnap:
                 for j in objects_np[index_of_label_1]:
                     # (x1_min < x2_max and x2_min < x1_max) \
                     #     and (y2_min < y1_max and y1_min < y2_max)
-                    if i[0] < j[2] and j[0] < i[2] and j[1] < i[3] and i[1] < j[3]:
+                    if i[0] < j[2] and j[0] < i[2] and \
+                            j[1] < i[3] and i[1] < j[3]:
                         return 5
             # 重なってない場合、"FrontalFace"を信用しない
-            print("WARNING1:別のものを検出？")
             return 3
-        
+
         elif index_of_label_0[0].size > 0 \
                 and index_of_label_2[0].size > 0:
             # 2つのボックスが重なっているかを確認
@@ -127,18 +114,18 @@ class RoboSnap:
                 for j in objects_np[index_of_label_2]:
                     # (x1_min < x2_max and x2_min < x1_max) \
                     #     and (y2_min < y1_max and y1_min < y2_max)
-                    if i[0] < j[2] and j[0] < i[2] and j[1] < i[3] and i[1] < j[3]:
+                    if i[0] < j[2] and j[0] < i[2] and \
+                            j[1] < i[3] and i[1] < j[3]:
                         return 4
             # 重なってない場合、"Profile"を信用しない
-            print("WARNING2:別のものを検出？")
             return 3
-        
+
         elif index_of_label_0[0].size > 0:
             return 3
-        
+
         elif index_of_label_1[0].size > 0:
             return 2
-        
+
         elif index_of_label_2[0].size > 0:
             return 1
         else:
@@ -146,7 +133,6 @@ class RoboSnap:
 
     def start_snap(self) -> None:
         """ロボコンスナップを攻略する."""
-        print("self.__BASH_PATH", self.__BASH_PATH)
         # 物体検出のパラメータはデフォルト通り
         d = DetectObject()
 
@@ -156,7 +142,6 @@ class RoboSnap:
             while True:  # 画像が見つかるまでループ
                 # 画像の受信試み
                 self.execute_bash()
-                print()
 
                 # 受信できたか確認
                 img, fig_image_path = self.exist_image()
@@ -176,8 +161,7 @@ class RoboSnap:
 
             if img == self.__Fig_IMAGE_B:
                 # 配置エリアBの画像は検出せずにアップロード
-                print(img, "is skip")
-                # OfficialInterface.upload_snap(processed_image_path)
+                OfficialInterface.upload_snap(processed_image_path)
                 continue
 
             # 物体検出
@@ -187,12 +171,9 @@ class RoboSnap:
             # ベストショット画像らしさスコア算出
             score = self.check_bestshot(objects)
 
-            print("score: ", score)
-
             if score == 5:
-                # TODO:撮影動作を終了
-                print("ベストショット！！")
-                # OfficialInterface.upload_snap(processed_image_path)
+                # TODO:撮影動作をフラグ書き換える
+                OfficialInterface.upload_snap(processed_image_path)
                 sent_to_official = True
                 break
 
@@ -201,8 +182,7 @@ class RoboSnap:
                 pre_score = score
 
         if sent_to_official is False:
-            print("candidate_best_image")
-            # OfficialInterface.upload_snap(self.candidate_best_image)
+            OfficialInterface.upload_snap(self.candidate_best_image)
 
 
 if __name__ == "__main__":

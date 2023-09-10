@@ -43,4 +43,4 @@ class CameraSystem:
 
         # ロボコンスナップ攻略開始
         snap = RoboSnap(self.raspike_ip)
-        snap.start()
+        snap.start_snap()
