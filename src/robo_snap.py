@@ -3,8 +3,8 @@
 @author: kawanoichi
 """
 import os
-import subprocess
 import time
+import numpy as np
 
 from detect_object import DetectObject, PROJECT_DIR_PATH
 from image_processing import ImageProcessing
@@ -14,13 +14,20 @@ from official_interface import OfficialInterface
 class RoboSnap:
     """ロボコンスナップクラス."""
 
+    # __IMAGE_LIST = ["FigA_1.png",
+    #                 "FigA_2.png",
+    #                 "FigA_3.png",
+    #                 "FigA_4.png",
+    #                 "FigB.png"]
     __IMAGE_LIST = ["FigA_1.png",
                     "FigA_2.png",
-                    "FigA_3.png",
                     "FigA_4.png",
-                    "FigB.png"]
+                    "FigB.png",
+                    "FigA_3.png"
+                    ]
+    
 
-    __Fig_IMAGE_B = __IMAGE_LIST[1]
+    __Fig_IMAGE_B = "FigB.png"
 
     __DETECT_LABLE = {
         "Fig": 0,
@@ -28,33 +35,44 @@ class RoboSnap:
         "Profile": 2
     }
 
-    __BASH_PATH = os.path.join(PROJECT_DIR_PATH, "copy_fig.sh")
+    # NOTE:powershellの場合絶対パスでbashファイルが実行できない
+    #      よってcamera-system下での実装に対応
+    __BASH_PATH = os.path.join("copy_fig.sh")
     __IMAGE_DIR_PATH = os.path.join(PROJECT_DIR_PATH, "fig_image")
 
     def __init__(self,
                  raspike_ip="192.168.11.16",
                  ) -> None:
-        """コンストラクタ."""
+        """コンストラクタ.
+
+        Args:
+            raspike_ip: 走行体のIPアドレス
+        """
         self.raspike_ip = raspike_ip
         self.candidate_image = None
 
-    def execute_bash(self):
+    def execute_bash(self) -> None:
         """bashファイルを実行する関数."""
         for img in self.__IMAGE_LIST:
-            pass
-            # args = [self.__BASH_PATH, self.raspike_ip, img]
-            # try:
-            #     subprocess.run(args, check=True)
-            # except subprocess.CalledProcessError as e:
-            #     pass
+            bash_command = f"bash {self.__BASH_PATH} {self.raspike_ip} {img}"
+            try:
+                os.system(bash_command)
+            except Exception:
+                # 何回も実行するので、エラー文は省略
+                pass
 
-    def exist_image(self):
-        """画像が送られてきたかどうかの確認関数."""
+    def exist_image(self) -> str:
+        """画像が送られてきたかどうかの確認関数.
+
+        Returns:
+            img     (str): 画像ファイル名
+            img_path(str): 画像パス
+        """
         for img in self.__IMAGE_LIST:
             img_path = os.path.join(self.__IMAGE_DIR_PATH, img)
             if os.path.exists(img_path):
                 self.__IMAGE_LIST.remove(img)
-                return img_path, img
+                return img, img_path
         return None
 
     def check_bestshot(self, objects) -> int:
@@ -69,9 +87,9 @@ class RoboSnap:
             int: ベストショット画像らしさスコア
 
         NOTE:
-            objectsの型について
-             行数:検出数
-             列数:6列([x_min, y_min, x_max, y_max, conf, cls])
+            objectsの型について:
+                行数: 検出数
+                列数: 6列([x_min, y_min, x_max, y_max, conf, cls])
 
             検出項目:
                 0: "Fig", 1: "FrontalFace", 2: "Profile"
@@ -82,35 +100,53 @@ class RoboSnap:
                 0      : 3pt (ナイスショット)
                 1      : 2pt
                 2      : 1pt
-                other  : 0pt
-
-        TODO:
-            比較要素に座標を取り組む？
-            label in cls
+                others  : 0pt
         """
-        cls = [row[5] for row in objects]
-        if self.__DETECT_LABLE["Fig"] in cls \
-                and self.__DETECT_LABLE["FrontalFace"] in cls:
-            return 5
-
-        if self.__DETECT_LABLE["Fig"] in cls \
-                and self.__DETECT_LABLE["Profile"] in cls:
-            return 4
-
-        elif self.__DETECT_LABLE["Fig"] in cls:
+        objects_np = np.array(objects)
+        index_of_label_0 = np.where(objects_np[:,5] == 0)
+        index_of_label_1 = np.where(objects_np[:,5] == 1)
+        index_of_label_2 = np.where(objects_np[:,5] == 2)
+        
+        if index_of_label_0[0].size > 0 \
+                and index_of_label_1[0].size > 0:
+            # 2つのボックスが重なっているかを確認
+            for i in objects_np[index_of_label_0]:
+                for j in objects_np[index_of_label_1]:
+                    # (x1_min < x2_max and x2_min < x1_max) \
+                    #     and (y2_min < y1_max and y1_min < y2_max)
+                    if i[0] < j[2] and j[0] < i[2] and j[1] < i[3] and i[1] < j[3]:
+                        return 5
+            # 重なってない場合、"FrontalFace"を信用しない
+            print("WARNING1:別のものを検出？")
             return 3
-
-        elif self.__DETECT_LABLE["FrontalFace"] in cls:
+        
+        elif index_of_label_0[0].size > 0 \
+                and index_of_label_2[0].size > 0:
+            # 2つのボックスが重なっているかを確認
+            for i in objects_np[index_of_label_0]:
+                for j in objects_np[index_of_label_2]:
+                    # (x1_min < x2_max and x2_min < x1_max) \
+                    #     and (y2_min < y1_max and y1_min < y2_max)
+                    if i[0] < j[2] and j[0] < i[2] and j[1] < i[3] and i[1] < j[3]:
+                        return 4
+            # 重なってない場合、"Profile"を信用しない
+            print("WARNING2:別のものを検出？")
+            return 3
+        
+        elif index_of_label_0[0].size > 0:
+            return 3
+        
+        elif index_of_label_1[0].size > 0:
             return 2
-
-        elif self.__DETECT_LABLE["Profile"] in cls:
+        
+        elif index_of_label_2[0].size > 0:
             return 1
-
         else:
             return 0
 
-    def start(self) -> None:
+    def start_snap(self) -> None:
         """ロボコンスナップを攻略する."""
+        print("self.__BASH_PATH", self.__BASH_PATH)
         # 物体検出のパラメータはデフォルト通り
         d = DetectObject()
 
@@ -123,18 +159,18 @@ class RoboSnap:
                 print()
 
                 # 受信できたか確認
-                fig_image_path, img = self.exist_image()
+                img, fig_image_path = self.exist_image()
                 if fig_image_path is not None:
                     break
                 time.sleep(2)
 
-            # 鮮明化
+            # # 鮮明化
             processed_image_path = os.path.join(
                 self.__IMAGE_DIR_PATH, "processed_"+img)
             ImageProcessing.sharpen_image(img_path=fig_image_path,
                                           save_path=processed_image_path)
 
-            # リサイズ
+            # # リサイズ
             ImageProcessing.resize_img(img_path=processed_image_path,
                                        save_path=processed_image_path)
 
@@ -172,5 +208,5 @@ class RoboSnap:
 if __name__ == "__main__":
     """作業用."""
     snap = RoboSnap()
-    snap.start()
+    snap.start_snap()
     print("終了")
