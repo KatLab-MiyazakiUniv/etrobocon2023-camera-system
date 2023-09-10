@@ -14,4 +14,4 @@ video/*
 *.pt
 
 # テスト
-!tests/testdata/*
+!tests/testdata/img/*
