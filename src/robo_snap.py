@@ -137,8 +137,8 @@ class RoboSnap:
         d = DetectObject()
 
         sent_to_official = False
-        while len(self.__IMG_LIST):  # 全てのファイルの物体検出が終わるまでループ
-            pre_score = -1
+        for _ in range(len(self.__IMG_LIST)):
+            pre_score = -1 #score初期値
             while True:  # 画像が見つかるまでループ
                 # 画像の受信試み
                 self.execute_bash()
