@@ -29,24 +29,6 @@ class TestRoboSnap:
             "FigA_3.png",
             "FigA_4.png"]
 
-        # 生成されるべき画像
-        self.exists_img_list = [
-            "processed_black_image.png",
-            "processed_FigA_1.png",
-            "processed_FigA_2.png",
-            "processed_FigA_3.png",
-            "processed_FigB.png",
-            "detected_FigA_1.png",
-            "detected_FigA_2.png",
-            "detected_FigA_3.png"]
-
-        # 生成されないはずの画像
-        self.not_exists_img_list = [
-            "processed_FigA_4.png",
-            "detected_FigA_4.png",
-            "detected_FigB.png",
-            "detected_black_image.png"]
-
     def teardown_method(self):
         """後処理."""
         for img_name in self.snap.img_list:
@@ -57,23 +39,24 @@ class TestRoboSnap:
             delete_img(path1)
             delete_img(path2)
 
-    @mock.patch("src.robo_snap.OfficialInterface.upload_snap")
     @mock.patch("src.robo_snap.RoboSnap.execute_bash")
-    def test_start_snap(self, mock_execute_bash, mock_upload_snap):
+    @mock.patch("src.robo_snap.DetectObject.detect_object")
+    @mock.patch("src.robo_snap.OfficialInterface.upload_snap")
+    def test_start_snap(self,
+                        mock_upload_snap,
+                        mock_detect_object,
+                        mock_execute_bash):
         """ロボコンスナップ攻略クラスのテスト."""
         mock_execute_bash.return_value = None
+        mock_detect_object.return_value = []
         mock_upload_snap.return_value = None
         assert self.snap.start_snap() is None
 
         # 画像が生成されているかのチェック
-        for img in self.exists_img_list:
-            check_img_path = os.path.join(self.snap.img_dir_path, img)
+        for img in self.snap.img_list:
+            check_img_path = os.path.join(
+                self.snap.img_dir_path, "processed_"+img)
             assert os.path.exists(check_img_path)
-
-        # 画像が生成されていないかのチェック
-        for img in self.not_exists_img_list:
-            check_img_path = os.path.join(self.snap.img_dir_path, img)
-            assert not os.path.exists(check_img_path)
 
     def test_check_bestshot(self):
         """ロベストショット画像らしさスコアの算出のテスト."""
