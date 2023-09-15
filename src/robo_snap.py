@@ -14,18 +14,18 @@ from official_interface import OfficialInterface
 class RoboSnap:
     """ロボコンスナップ攻略クラス."""
 
-    __IMG_LIST = ["FigA_3.png",
-                  "FigA_2.png",
-                  "FigA_3.png",
-                  "FigA_4.png",
-                  "FigB.png"]
+    img_list = ["FigA_1.png",
+                "FigA_2.png",
+                "FigA_3.png",
+                "FigA_4.png",
+                "FigB.png"]
 
-    __Fig_IMG_B = "FigB.png"
+    fig_img_B = "FigB.png"
 
-    # NOTE:powershellの場合絶対パスでbashファイルが実行できない
+    # NOTE:powershellの場合、絶対パスでbashファイルが実行できない？
     #      よってcamera-system下での実装に対応
-    __BASH_PATH = os.path.join("copy_fig.sh")
-    __IMG_DIR_PATH = os.path.join(PROJECT_DIR_PATH, "fig_image")
+    bash_path = "copy_fig.sh"
+    img_dir_path = os.path.join(PROJECT_DIR_PATH, "fig_image")
 
     def __init__(self,
                  raspike_ip="192.168.11.16",
@@ -40,8 +40,8 @@ class RoboSnap:
 
     def execute_bash(self) -> None:
         """bashファイルを実行する関数."""
-        for img in self.__IMG_LIST:
-            bash_command = f"bash {self.__BASH_PATH} {self.raspike_ip} {img}"
+        for img in self.img_list:
+            bash_command = f"bash {self.bash_path} {self.raspike_ip} {img}"
             try:
                 os.system(bash_command)
             except Exception:
@@ -55,10 +55,10 @@ class RoboSnap:
             img_name     (str): 画像ファイル名
             img_path(str): 画像パス
         """
-        for img_name in self.__IMG_LIST:
-            img_path = os.path.join(self.__IMG_DIR_PATH, img_name)
+        for img_name in self.img_list:
+            img_path = os.path.join(self.img_dir_path, img_name)
             if os.path.exists(img_path):
-                self.__IMG_LIST.remove(img_name)
+                self.img_list.remove(img_name)
                 return img_name, img_path
         return None, None
 
@@ -89,6 +89,8 @@ class RoboSnap:
                 2      : 1pt
                 others  : 0pt
         """
+        if len(objects) == 0:
+            return 0
         objects_np = np.array(objects)
         index_of_label_0 = np.where(objects_np[:, 5] == 0)
         index_of_label_1 = np.where(objects_np[:, 5] == 1)
@@ -137,7 +139,7 @@ class RoboSnap:
         d = DetectObject()
 
         sent_to_official = False
-        for _ in range(len(self.__IMG_LIST)):
+        for _ in range(len(self.img_list)):
             pre_score = -1  # score初期値
             while True:  # 画像が見つかるまでループ
                 # 画像の受信試み
@@ -148,10 +150,9 @@ class RoboSnap:
                 if img_path is not None:
                     break
                 time.sleep(2)
-
-            # # 鮮明化
+            # 鮮明化
             processed_img_path = os.path.join(
-                self.__IMG_DIR_PATH, "processed_"+img_name)
+                self.img_dir_path, "processed_"+img_name)
             ImageProcessing.sharpen_image(img_path=img_path,
                                           save_path=processed_img_path)
 
@@ -159,18 +160,21 @@ class RoboSnap:
             ImageProcessing.resize_img(img_path=processed_img_path,
                                        save_path=processed_img_path)
 
-            if img_name == self.__Fig_IMG_B:
+            if img_name == self.fig_img_B:
                 # 配置エリアBの画像は検出せずにアップロード
                 OfficialInterface.upload_snap(processed_img_path)
                 continue
 
             # 物体検出
             save_path = os.path.join(
-                self.__IMG_DIR_PATH, "detected_"+img_name)
+                self.img_dir_path, "detected_"+img_name)
             objects = d.detect_object(processed_img_path, save_path)
 
             # ベストショット画像らしさスコア算出
-            score = self.check_bestshot(objects)
+            try:
+                score = self.check_bestshot(objects)
+            except Exception as e:
+                score = 0
 
             if score == 5:
                 # TODO:撮影動作をフラグ書き換える
@@ -183,6 +187,7 @@ class RoboSnap:
                 pre_score = score
 
         if sent_to_official is False:
+            # 候補画像のアップロード
             OfficialInterface.upload_snap(self.candidate_img_path)
 
 

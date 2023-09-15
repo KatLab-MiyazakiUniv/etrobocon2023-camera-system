@@ -229,6 +229,7 @@ if __name__ == '__main__':
                      args.line_thickness,
                      args.stride)
 
-    d.detect_object(args.img_path, args.save_path)
+    objects = d.detect_object(args.img_path, args.save_path)
+    print("objects\n", objects)
 
     print("完了")

@@ -40,7 +40,3 @@ snap:
 
 detect:
 	poetry run python src/detect_object.py
-
-rm:
-	del fig_image/detected_Fig*.png
-	del fig_image/processed_Fig*.png

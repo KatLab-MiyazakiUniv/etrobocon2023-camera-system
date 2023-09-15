@@ -7,6 +7,7 @@ import requests
 from image_processing import ImageProcessing
 from PIL import Image
 
+
 class ResponseError(Exception):
     """レスポンスエラー用の例外."""
 
@@ -67,7 +68,6 @@ class OfficialInterface:
         params = {
             "id": cls.TEAM_ID
         }
-
 
         try:
             # サイズが正しくない場合はリサイズする
