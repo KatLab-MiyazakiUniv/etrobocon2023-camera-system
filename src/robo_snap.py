@@ -14,7 +14,7 @@ from official_interface import OfficialInterface
 class RoboSnap:
     """ロボコンスナップ攻略クラス."""
 
-    __IMG_LIST = ["FigA_1.png",
+    __IMG_LIST = ["FigA_3.png",
                   "FigA_2.png",
                   "FigA_3.png",
                   "FigA_4.png",
@@ -138,7 +138,7 @@ class RoboSnap:
 
         sent_to_official = False
         for _ in range(len(self.__IMG_LIST)):
-            pre_score = -1 #score初期値
+            pre_score = -1  # score初期値
             while True:  # 画像が見つかるまでループ
                 # 画像の受信試み
                 self.execute_bash()

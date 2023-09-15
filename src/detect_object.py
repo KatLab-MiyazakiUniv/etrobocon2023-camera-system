@@ -3,7 +3,7 @@
 ベストショット画像を選択するための物体検出を行う。
 
 NOTE:
-    'learned_weight.pt'は以下にあります。
+    'learned_fig_weight.pt'は以下にあります。
     https://drive.google.com/drive/folders/1aUrB3Pj4hzt624SlJv8h1vVOBopAr48l
     etrobocon2023-camera-system/yolo/の中にダウンロードしてください
 
