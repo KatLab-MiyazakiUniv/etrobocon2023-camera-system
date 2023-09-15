@@ -177,7 +177,7 @@ class RoboSnap:
                 score = 0
 
             if score == 5:
-                # TODO:撮影動作をフラグ書き換える
+                # TODO:撮影動作のフラグを書き換える
                 OfficialInterface.upload_snap(processed_img_path)
                 sent_to_official = True
                 break
