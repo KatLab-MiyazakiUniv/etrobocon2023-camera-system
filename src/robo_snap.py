@@ -38,7 +38,7 @@ class RoboSnap:
         self.raspike_ip = raspike_ip
         self.candidate_img_path = None
 
-    def execute_bash(self) -> None:
+    def scp_fig_image(self) -> None:
         """走行体からフィグ画像を取得するbashファイルを実行する関数."""
         for img in self.img_list:
             bash_command = f"bash {self.bash_path} {self.raspike_ip} {img}"
@@ -152,7 +152,7 @@ class RoboSnap:
             pre_score = -1  # score初期値
             while True:  # 画像が見つかるまでループ
                 # 画像の受信試み
-                self.execute_bash()
+                self.scp_fig_image()
 
                 # 受信できたか確認
                 img_name, img_path = self.exist_image()
@@ -175,9 +175,10 @@ class RoboSnap:
                 continue
 
             # 物体検出
-            save_path = os.path.join(
+            detected_img_path = os.path.join(
                 self.img_dir_path, "detected_"+img_name)
-            objects = d.detect_object(processed_img_path, save_path)
+            objects = d.detect_object(img_path=processed_img_path,
+                                      save_path=detected_img_path)
 
             # ベストショット画像らしさスコア算出
             try:
