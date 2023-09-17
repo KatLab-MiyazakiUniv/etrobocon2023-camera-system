@@ -79,18 +79,23 @@ class RoboSnap:
                 列数: 6列([x_min, y_min, x_max, y_max, conf, cls])
 
             検出項目:
-                0: "Fig", 1: "FrontalFace", 2: "Profile"
+                0: "Fig" - ミニフィグの全身
+                1: "FrontalFace" - ミニフィグの正面顔
+                2: "Profile" - ミニフィグの横顔
 
             スコア定義
-                0 and 1: 5pt ベストショット確定(撮影動作Skip)
-                0 and 2: 4pt (もしかしたらベストショット)
-                0      : 3pt (ナイスショット)
-                1      : 2pt
-                2      : 1pt
+                0 and 1 : 5pt ベストショット確定(撮影動作Skip)
+                0 and 2 : 4pt (もしかしたらベストショット)
+                0       : 3pt (ナイスショット)
+                1       : 2pt
+                2       : 1pt
                 others  : 0pt
         """
+        # 検出されたobjectがなかった場合
         if len(objects) == 0:
             return 0
+        
+        # objectをラベルごとに仕分け
         objects_np = np.array(objects)
         index_of_label_0 = np.where(objects_np[:, 5] == 0)
         index_of_label_1 = np.where(objects_np[:, 5] == 1)
