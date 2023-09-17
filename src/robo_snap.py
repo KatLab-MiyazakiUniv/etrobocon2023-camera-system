@@ -97,47 +97,47 @@ class RoboSnap:
 
         # objectをラベルごとに仕分け
         objects_np = np.array(objects)
-        index_of_label_0 = np.where(objects_np[:, 5] == 0)
-        index_of_label_1 = np.where(objects_np[:, 5] == 1)
-        index_of_label_2 = np.where(objects_np[:, 5] == 2)
+        index_of_fig = np.where(objects_np[:, 5] == 0)
+        index_of_frontalface = np.where(objects_np[:, 5] == 1)
+        index_of_profile = np.where(objects_np[:, 5] == 2)
 
-        if index_of_label_0[0].size > 0 \
-                and index_of_label_1[0].size > 0:
+        if index_of_fig[0].size > 0 \
+                and index_of_frontalface[0].size > 0:
             # 2つのボックスが重なっているかを確認
-            for label_0 in objects_np[index_of_label_0]:
-                for label_1 in objects_np[index_of_label_1]:
+            for fig in objects_np[index_of_fig]:
+                for frontalface in objects_np[index_of_frontalface]:
                     # (x1_min < x2_max and x2_min < x1_max) \
                     #     and (y2_min < y1_max and y1_min < y2_max)
-                    if label_0[0] < label_1[2] and \
-                            label_1[0] < label_0[2] and \
-                            label_1[1] < label_0[3] and \
-                            label_0[1] < label_1[3]:
+                    if fig[0] < frontalface[2] and \
+                            frontalface[0] < fig[2] and \
+                            frontalface[1] < fig[3] and \
+                            fig[1] < frontalface[3]:
                         return 5
             # 重なってない場合、"FrontalFace"を信用しない
             return 3
 
-        elif index_of_label_0[0].size > 0 \
-                and index_of_label_2[0].size > 0:
+        elif index_of_fig[0].size > 0 \
+                and index_of_profile[0].size > 0:
             # 2つのボックスが重なっているかを確認
-            for label_0 in objects_np[index_of_label_0]:
-                for label_2 in objects_np[index_of_label_2]:
+            for fig in objects_np[index_of_fig]:
+                for profile in objects_np[index_of_profile]:
                     # (x1_min < x2_max and x2_min < x1_max) \
                     #     and (y2_min < y1_max and y1_min < y2_max)
-                    if label_0[0] < label_2[2] and \
-                            label_2[0] < label_0[2] and \
-                            label_2[1] < label_0[3] and \
-                            label_0[1] < label_2[3]:
+                    if fig[0] < profile[2] and \
+                            profile[0] < fig[2] and \
+                            profile[1] < fig[3] and \
+                            fig[1] < profile[3]:
                         return 4
             # 重なってない場合、"Profile"を信用しない
             return 3
 
-        elif index_of_label_0[0].size > 0:
+        elif index_of_fig[0].size > 0:
             return 3
 
-        elif index_of_label_1[0].size > 0:
+        elif index_of_frontalface[0].size > 0:
             return 2
 
-        elif index_of_label_2[0].size > 0:
+        elif index_of_profile[0].size > 0:
             return 1
         else:
             return 0
