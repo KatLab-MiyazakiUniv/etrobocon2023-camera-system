@@ -44,3 +44,19 @@ class Client:
             return
 
         return response_text
+
+    def set_true_camera_action_skip(self) -> bool:
+        """撮影終了フラグを立てる.
+
+        Returns:
+            success (bool): 通信が成功したか(成功:true/失敗:false)
+        """
+        url = f"http://{self.server_ip}/"
+        try:
+            # APIにリクエストを送信
+            response = requests.post(url)
+            success = True
+        except Exception as e:
+            print(e)
+            success = False
+        return success
