@@ -94,7 +94,7 @@ class RoboSnap:
         # 検出されたobjectがなかった場合
         if len(objects) == 0:
             return 0
-        
+
         # objectをラベルごとに仕分け
         objects_np = np.array(objects)
         index_of_label_0 = np.where(objects_np[:, 5] == 0)
