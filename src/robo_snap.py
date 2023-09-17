@@ -39,7 +39,7 @@ class RoboSnap:
         self.candidate_img_path = None
 
     def execute_bash(self) -> None:
-        """bashファイルを実行する関数."""
+        """走行体からフィグ画像を取得するbashファイルを実行する関数."""
         for img in self.img_list:
             bash_command = f"bash {self.bash_path} {self.raspike_ip} {img}"
             try:
@@ -48,11 +48,11 @@ class RoboSnap:
                 # 何回も実行するので、エラー文は省略
                 pass
 
-    def exist_image(self) -> str:
+    def exist_image(self) -> (str, str):
         """画像が送られてきたかどうかの確認関数.
 
         Returns:
-            img_name     (str): 画像ファイル名
+            img_name(str): 画像ファイル名
             img_path(str): 画像パス
         """
         for img_name in self.img_list:
@@ -78,7 +78,7 @@ class RoboSnap:
                 行数: 検出数
                 列数: 6列([x_min, y_min, x_max, y_max, conf, cls])
 
-            検出項目:
+            検出項目(ラベル):
                 0: "Fig" - ミニフィグの全身
                 1: "FrontalFace" - ミニフィグの正面顔
                 2: "Profile" - ミニフィグの横顔
@@ -104,12 +104,14 @@ class RoboSnap:
         if index_of_label_0[0].size > 0 \
                 and index_of_label_1[0].size > 0:
             # 2つのボックスが重なっているかを確認
-            for i in objects_np[index_of_label_0]:
-                for j in objects_np[index_of_label_1]:
+            for label_0 in objects_np[index_of_label_0]:
+                for label_1 in objects_np[index_of_label_1]:
                     # (x1_min < x2_max and x2_min < x1_max) \
                     #     and (y2_min < y1_max and y1_min < y2_max)
-                    if i[0] < j[2] and j[0] < i[2] and \
-                            j[1] < i[3] and i[1] < j[3]:
+                    if label_0[0] < label_1[2] and \
+                            label_1[0] < label_0[2] and \
+                            label_1[1] < label_0[3] and \
+                            label_0[1] < label_1[3]:
                         return 5
             # 重なってない場合、"FrontalFace"を信用しない
             return 3
@@ -117,12 +119,14 @@ class RoboSnap:
         elif index_of_label_0[0].size > 0 \
                 and index_of_label_2[0].size > 0:
             # 2つのボックスが重なっているかを確認
-            for i in objects_np[index_of_label_0]:
-                for j in objects_np[index_of_label_2]:
+            for label_0 in objects_np[index_of_label_0]:
+                for label_2 in objects_np[index_of_label_2]:
                     # (x1_min < x2_max and x2_min < x1_max) \
                     #     and (y2_min < y1_max and y1_min < y2_max)
-                    if i[0] < j[2] and j[0] < i[2] and \
-                            j[1] < i[3] and i[1] < j[3]:
+                    if label_0[0] < label_2[2] and \
+                            label_2[0] < label_0[2] and \
+                            label_2[1] < label_0[3] and \
+                            label_0[1] < label_2[3]:
                         return 4
             # 重なってない場合、"Profile"を信用しない
             return 3
@@ -161,7 +165,7 @@ class RoboSnap:
             ImageProcessing.sharpen_image(img_path=img_path,
                                           save_path=processed_img_path)
 
-            # # リサイズ
+            # リサイズ
             ImageProcessing.resize_img(img_path=processed_img_path,
                                        save_path=processed_img_path)
 
@@ -181,6 +185,7 @@ class RoboSnap:
             except Exception as e:
                 score = 0
 
+            # ベストショット確定だと判断した場合
             if score == 5:
                 # TODO:撮影動作のフラグを書き換える
                 OfficialInterface.upload_snap(processed_img_path)
