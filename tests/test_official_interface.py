@@ -32,8 +32,7 @@ class TestOfficialInterface:
         mock_response.status_code = 200
         mock_post.return_value = mock_response
         img_path = "tests/testdata/img/fig.png"
-        resized_img_path = "tests/testdata/img/resized_fig.png"
-        OfficialInterface.upload_snap(img_path, resized_img_path)
+        OfficialInterface.upload_snap(img_path)
 
     @mock.patch("requests.post")
     def test_upload_snap_server_error(self, mock_post):
@@ -41,5 +40,4 @@ class TestOfficialInterface:
         mock_response.status_code = 500
         mock_post.return_value = mock_response
         img_path = "tests/testdata/img/fig.png"
-        resized_img_path = "tests/testdata/img/resized_fig.png"
-        OfficialInterface.upload_snap(img_path, resized_img_path)
+        OfficialInterface.upload_snap(img_path)

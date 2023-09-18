@@ -3,7 +3,7 @@
 ベストショット画像を選択するための物体検出を行う。
 
 NOTE:
-    'learned_weight.pt'は以下にあります。
+    'learned_fig_weight.pt'は以下にあります。
     https://drive.google.com/drive/folders/1aUrB3Pj4hzt624SlJv8h1vVOBopAr48l
     etrobocon2023-camera-system/yolo/の中にダウンロードしてください
 
@@ -29,15 +29,15 @@ from utils.general import (
 from utils.torch_utils import select_device
 from utils.augmentations import letterbox
 
-IMAGE_DIR_PATH = os.path.join(script_dir, "..", "fig_image")
-IMAGE_DIR_PATH = Path(IMAGE_DIR_PATH)
+PROJECT_DIR_PATH = os.path.dirname(script_dir)
+IMAGE_DIR_PATH = Path(os.path.join(PROJECT_DIR_PATH, "fig_image"))
 
 
 class DetectObject():
     """yolov5(物体検出)をロボコン用に編集したクラス."""
 
-    DEVICE = 'cpu'
-    IMG_SIZE = (640, 480)
+    __DEVICE = 'cpu'
+    __IMG_SIZE = (640, 480)
 
     def __init__(self,
                  weights=YOLO_PATH/'learned_fig_weight.pt',
@@ -100,7 +100,7 @@ class DetectObject():
         self.check_exist(img_path)
 
         # cpuを指定
-        device = select_device(DetectObject.DEVICE)
+        device = select_device(self.__DEVICE)
 
         # モデルの読み込み
         model = DetectMultiBackend(self.weights,
@@ -113,7 +113,7 @@ class DetectObject():
 
         # 画像のサイズを指定されたストライド（ステップ）の倍数に合わせるための関数
         img_size = check_img_size(
-            DetectObject.IMG_SIZE, s=stride)  # >> [640, 640]
+            self.__IMG_SIZE, s=stride)  # >> [640, 640]
 
         # モデルの初期化
         batch_size = 1
@@ -125,7 +125,7 @@ class DetectObject():
 
         # パディング処理
         img = letterbox(original_img,
-                        DetectObject.IMG_SIZE,
+                        self.__IMG_SIZE,
                         stride=self.stride,
                         auto=True)[0]
         img = img.transpose((2, 0, 1))[::-1]  # BGR -> RGB
@@ -188,7 +188,7 @@ class DetectObject():
              行数:検出数
              列数:6列([x_min, y_min, x_max, y_max, conf, cls])
         """
-        return objects
+        return objects.tolist()
 
 
 if __name__ == '__main__':
@@ -229,6 +229,7 @@ if __name__ == '__main__':
                      args.line_thickness,
                      args.stride)
 
-    d.detect_object(args.img_path, args.save_path)
+    objects = d.detect_object(args.img_path, args.save_path)
+    print("objects\n", objects)
 
     print("完了")
