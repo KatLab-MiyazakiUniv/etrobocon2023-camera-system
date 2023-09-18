@@ -5,6 +5,7 @@
 """
 import requests
 from image_processing import ImageProcessing
+from PIL import Image
 
 
 class ResponseError(Exception):
@@ -49,12 +50,11 @@ class OfficialInterface:
         return success
 
     @classmethod
-    def upload_snap(cls, img_path: str, resize_img_path: str) -> bool:
+    def upload_snap(cls, img_path: str) -> bool:
         """フィグ画像をアップロードする.
 
         Args:
             img_path (str): アップロードする画像のパス
-            resize_img_path (str): リサイズした画像を保存するパス
 
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
@@ -64,21 +64,22 @@ class OfficialInterface:
         headers = {
             "Content-Type": "image/png"
         }
-
-        # 指定された画像をリクエストに含める
-        ImageProcessing.resize_img(img_path, resize_img_path, 640, 480)
-        with open(resize_img_path, "rb") as image_file:
-            image_data = image_file.read()
-        # チームIDをリクエストに含める
+        # リクエストパラメータ
         params = {
             "id": cls.TEAM_ID
         }
 
         try:
-            # 指定された画像をリサイズする
-            cls.resize_img(img_path, resize_img_path)
-            with open(resize_img_path, "rb") as resize_image_file:
-                image_data = resize_image_file.read()
+            # サイズが正しくない場合はリサイズする
+            img = Image.open(img_path)
+            width, height = img.size
+            if not (width == 640 and height == 480):
+                ImageProcessing.resize_img(img_path, img_path, 640, 480)
+
+            # bytes型で読み込み
+            with open(img_path, "rb") as image_file:
+                image_data = image_file.read()
+
             # APIにリクエストを送信
             response = requests.post(url, headers=headers,
                                      data=image_data, params=params)

@@ -33,3 +33,4 @@ all:
 	make format
 	make test
 	make check_style
+
