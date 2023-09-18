@@ -36,7 +36,6 @@ class RoboSnap:
             raspike_ip: 走行体のIPアドレス
         """
         self.raspike_ip = raspike_ip
-        self.candidate_img_path = None
 
     def scp_fig_image(self) -> None:
         """走行体からフィグ画像を取得するbashファイルを実行する関数."""
@@ -83,7 +82,7 @@ class RoboSnap:
                 1: "FrontalFace" - ミニフィグの正面顔
                 2: "Profile" - ミニフィグの横顔
 
-            スコア定義
+            スコア定義:
                 0 and 1 : 5pt ベストショット確定(撮影動作Skip)
                 0 and 2 : 4pt (もしかしたらベストショット)
                 0       : 3pt (ナイスショット)
@@ -149,7 +148,7 @@ class RoboSnap:
 
         sent_to_official = False
         for _ in range(len(self.img_list)):
-            pre_score = -1  # score初期値
+            max_score = -1  # score初期値
             while True:  # 画像が見つかるまでループ
                 # 画像の受信試み
                 self.scp_fig_image()
@@ -193,13 +192,15 @@ class RoboSnap:
                 sent_to_official = True
                 break
 
-            elif score > pre_score:
-                self.candidate_img_path = processed_img_path
-                pre_score = score
+            elif score > max_score:
+                # 候補画像の更新
+                candidate_img_path = processed_img_path
+                max_score = score
 
+        # ベストショット確定と判断できる画像がなかった場合
         if sent_to_official is False:
             # 候補画像のアップロード
-            OfficialInterface.upload_snap(self.candidate_img_path)
+            OfficialInterface.upload_snap(candidate_img_path)
 
 
 if __name__ == "__main__":
