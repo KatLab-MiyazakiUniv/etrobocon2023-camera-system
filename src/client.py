@@ -52,9 +52,10 @@ class Client:
             success (bool): 通信が成功したか(成功:true/失敗:false)
         """
         url = f"http://{self.server_ip}/robot_info/skip_camera_action_true"
+        req = urllib.request.Request(url)
+        
         try:
-            # APIにリクエストを送信
-            response = requests.post(url)
+            urllib.request.urlopen(req)
             success = True
         except Exception as e:
             print(e)
