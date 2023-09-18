@@ -38,6 +38,7 @@ class CameraSystem:
 
             elif state == "lap":
                 # IoT列車の攻略を開始
+                # TODO:observeが"q"を押さないと終了しないバグを修正
                 tt.observe()
 
                 # ロボコンスナップ攻略開始
