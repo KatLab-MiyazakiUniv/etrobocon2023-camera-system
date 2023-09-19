@@ -13,7 +13,7 @@ from robo_snap import RoboSnap
 class CameraSystem:
     """カメラシステムクラス."""
 
-    def __init__(self, raspike_ip="192.168.11.17") -> None:
+    def __init__(self, raspike_ip="172.20.1.1") -> None:
         """カメラシステムのコンストラクタ."""
         self.raspike_ip = raspike_ip
 
@@ -21,7 +21,8 @@ class CameraSystem:
         """ゲーム攻略を計画する."""
         print("camera-system start!!")
         # キャリブレーション後に走行体状態取得モジュールを実行する
-        # sever_ipは、走行体１なら192.168.11.16、走行体２なら192.168.11.17
+        # sever_ipは、Bluetooth接続なら172.20.1.1
+        # Wi-Fi接続なら、走行体１は192.168.11.16、走行体２は192.168.11.17
         server_ip = self.raspike_ip + ":8000"
         client = Client(server_ip)
 
@@ -37,7 +38,7 @@ class CameraSystem:
                 break
 
             elif state == "lap":
-                # IoT列車の攻略を開始
+                # IoT列車の監視を開始
                 # TODO:observeが"q"を押さないと終了しないバグを修正
                 tt.observe()
 

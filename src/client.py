@@ -1,7 +1,7 @@
 """走行体状態取得モジュール.
 
 走行体の状態を取得する.
-@author: aridome222
+@author: aridome222 miyashita64
 @note: 参考 https://qiita.com/hoto17296/items/8fcf55cc6cd823a18217
 """
 import urllib.request
@@ -44,3 +44,20 @@ class Client:
             return
 
         return response_text
+
+    def set_true_camera_action_skip(self) -> bool:
+        """撮影終了フラグを立てる.
+
+        Returns:
+            success (bool): 通信が成功したか(成功:true/失敗:false)
+        """
+        url = f"http://{self.server_ip}/robot_info/skip_camera_action_true"
+        req = urllib.request.Request(url)
+        
+        try:
+            urllib.request.urlopen(req)
+            success = True
+        except Exception as e:
+            print(e)
+            success = False
+        return success
