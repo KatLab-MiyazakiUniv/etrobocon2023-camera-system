@@ -9,7 +9,7 @@ import numpy as np
 from detect_object import DetectObject, PROJECT_DIR_PATH
 from image_processing import ImageProcessing
 from official_interface import OfficialInterface
-
+from client import Client
 
 class RoboSnap:
     """ロボコンスナップ攻略クラス."""
@@ -187,9 +187,10 @@ class RoboSnap:
 
             # ベストショット確定だと判断した場合
             if score == 5:
-                # TODO:撮影動作のフラグを書き換える
                 OfficialInterface.upload_snap(processed_img_path)
                 sent_to_official = True
+                client = Client(self.raspike_ip)
+                client.set_true_camera_action_skip()
                 break
 
             elif score > max_score:
