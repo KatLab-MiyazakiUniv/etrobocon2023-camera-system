@@ -131,16 +131,14 @@ class TrainTracker:
                                       train_rect_points[1], (0, 0, 255), -1)
                         # IoT列車を停止する
                         OfficialInterface.set_train_pwm(0)
+                        # IoT列車攻略を修了する
+                        break
 
             # フレームの表示
             cv2.imshow("Frame", mark_frame)
             # フレームのファイル出力
             video.write(frame)              # 撮影した動画
             mark_video.write(mark_frame)    # 輪郭線を描画した動画
-
-            # "q"キーでループを終了
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
 
         # リソースを解放
         self.camera.end_record()
