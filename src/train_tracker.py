@@ -131,7 +131,7 @@ class TrainTracker:
                                       train_rect_points[1], (0, 0, 255), -1)
                         # IoT列車を停止する
                         OfficialInterface.set_train_pwm(0)
-                        # IoT列車攻略を修了する
+                        # IoT列車攻略を終了する
                         break
 
             # フレームの表示
