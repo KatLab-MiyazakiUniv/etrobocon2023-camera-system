@@ -83,7 +83,7 @@ class OfficialInterface:
             # APIにリクエストを送信
             response = requests.post(url, headers=headers,
                                      data=image_data, params=params)
-            # レスポンスのステータスコードが200の場合、通信成功
+            # レスポンスのステータスコードが201の場合、通信成功
             if response.status_code != 201:
                 raise ResponseError("Failed to send fig image.")
             success = True
