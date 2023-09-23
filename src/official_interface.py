@@ -84,10 +84,16 @@ class OfficialInterface:
             response = requests.post(url, headers=headers,
                                      data=image_data, params=params)
             # レスポンスのステータスコードが200の場合、通信成功
-            if response.status_code != 200:
+            if response.status_code != 201:
                 raise ResponseError("Failed to send fig image.")
             success = True
         except Exception as e:
             print(e)
             success = False
         return success
+
+if __name__ == "__main__":
+    ("test-start")
+    OfficialInterface.set_train_pwm(10)
+    OfficialInterface.upload_snap("../fig_image/fig1.png")
+    ("test-end")
