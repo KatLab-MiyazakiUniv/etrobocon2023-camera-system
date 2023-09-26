@@ -93,7 +93,7 @@ class OfficialInterface:
         return success
 
 if __name__ == "__main__":
-    ("test-start")
+    print("test-start")
     OfficialInterface.set_train_pwm(10)
-    OfficialInterface.upload_snap("../fig_image/fig1.png")
-    ("test-end")
+    OfficialInterface.upload_snap("../tests/testdata/img/fig.png")
+    print("test-end")
