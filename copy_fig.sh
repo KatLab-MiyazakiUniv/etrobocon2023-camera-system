@@ -19,7 +19,6 @@ REMOTE_DIRECTORY="~/work/RasPike/sdk/workspace/etrobocon2023/rear_camera_py/imag
 LOCAL_DIRECTORY="./fig_image/"
 
 # SSH経由で画像をコピー
-# TODO:タイムアウトを入れる？ 
 scp "$REMOTE_USER@$REMOTE_IP:$REMOTE_DIRECTORY$IMAGE_NAME" "$LOCAL_DIRECTORY"
 
 # スクリプトの終了

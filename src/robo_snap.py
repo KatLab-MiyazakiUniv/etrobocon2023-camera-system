@@ -53,14 +53,25 @@ class RoboSnap:
             img_name(str): ファイル(画像)名
         """
         for img_name in self.img_list:
-            bash_command = f"bash {self.bash_path} {self.raspike_ip} {img_name}"
+            bash_command = \
+                f"bash {self.bash_path} {self.raspike_ip} {img_name}"
             try:
                 os.system(bash_command)
+
+                # 受信できたか確認
+                img_path = os.path.join(self.img_dir_path, img_name)
+                if not self.check_exist(img_path):
+                    print(f"{img_name} is not exist")
+                    continue
+                else:
+                    print(f"{img_name} is exist")
+                    self.img_list.remove(img_name)
+                    return img_name, img_path
+
             except Exception:
                 # 何回も実行するので、エラー文は省略
                 continue
-            return img_name
-        return None
+        return None, None
 
     def check_exist(self, path) -> bool:
         """ファイルもしくはディレクトリが存在するか確認する関数.
@@ -158,7 +169,7 @@ class RoboSnap:
         """ロボコンスナップを攻略する."""
 
         # 画像を格納するディレクトリの作成
-        self.set_up()
+        # self.set_up()
 
         # 物体検出のパラメータはデフォルト通り
         d = DetectObject()
@@ -175,16 +186,11 @@ class RoboSnap:
                 max_score = -1  # score初期値
                 while True:  # 画像が見つかるまでループ
                     # 画像の受信試み
-                    img_name = self.scp_fig_image()
+                    img_name, img_path = self.scp_fig_image()
 
-                    if img_name is None:
-                        continue
-
-                    # 受信できたか確認
-                    img_path = os.path.join(self.img_dir_path, img_name)
-                    if self.check_exist(img_path):
-                        self.img_list.remove(img_name)
+                    if img_name is not None:
                         break
+
                     time.sleep(2)
 
                 # 鮮明化
@@ -219,8 +225,10 @@ class RoboSnap:
                 if score == 5:
                     best_shot_img = img_name
                     # 候補画像のアップロード
-                    if OfficialInterface.upload_snap(processed_img_path):
-                        successful_send_best_shot = True
+                    if not OfficialInterface.upload_snap(processed_img_path):
+                        continue
+
+                    successful_send_best_shot = True
 
                     # skipフラグをTrueに変更
                     client = Client(self.raspike_ip)
@@ -240,9 +248,9 @@ class RoboSnap:
                     successful_send_candidate = True
         finally:
             print("\n- 実行結果")
-            print(f"-      FigB image: {str(self.fig_img_B):>10},  success:{str(successful_send_candidate):>10}")  # noqa
-            print(f"- candidate image: {str(candidate_img):>10},  success:{str(successful_send_fig_B):>10}")  # noqa
-            print(f"- best shot image: {str(best_shot_img):>10},  success:{str(successful_send_best_shot):>10}\n")  # noqa
+            print(f"-      FigB image: {str(self.fig_img_B):>10},  success:{str(successful_send_fig_B):>10}")  # noqa
+            print(f"- best shot image: {str(best_shot_img):>10},  success:{str(successful_send_best_shot):>10}")  # noqa
+            print(f"- candidate image: {str(candidate_img):>10},  success:{str(successful_send_candidate):>10}\n")  # noqa
 
 
 if __name__ == "__main__":
