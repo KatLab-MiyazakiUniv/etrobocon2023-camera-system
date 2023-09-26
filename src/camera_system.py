@@ -37,7 +37,7 @@ class CameraSystem:
             if state == "finish":
                 print(state)
                 break
-            elif state == "lap" and state == pre_state:
+            elif state == "lap" and state != pre_state:
                 # IoT列車の監視を開始
                 # TODO:observeが"q"を押さないと終了しないバグを修正
                 tt.observe()

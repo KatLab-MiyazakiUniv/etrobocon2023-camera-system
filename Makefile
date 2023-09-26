@@ -34,3 +34,5 @@ all:
 	make test
 	make check_style
 
+snap:
+	poetry run python src/robo_snap.py

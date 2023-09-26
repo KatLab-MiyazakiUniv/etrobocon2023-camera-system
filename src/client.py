@@ -53,7 +53,7 @@ class Client:
         """
         url = f"http://{self.server_ip}/robot_info/skip_camera_action_true"
         req = urllib.request.Request(url)
-        
+
         try:
             urllib.request.urlopen(req)
             success = True

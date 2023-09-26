@@ -15,3 +15,7 @@ video/*
 
 # テスト
 !tests/testdata/img/*
+
+# 画像を入れるディレクトリ
+fig_image/
+fig_image_copy/
