@@ -29,7 +29,7 @@ class TestOfficialInterface:
     @mock.patch("requests.post")
     def test_upload_snap(self, mock_post):
         mock_response = mock.Mock(spec=Response)
-        mock_response.status_code = 200
+        mock_response.status_code = 201
         mock_post.return_value = mock_response
         img_path = "tests/testdata/img/fig.png"
         OfficialInterface.upload_snap(img_path)
