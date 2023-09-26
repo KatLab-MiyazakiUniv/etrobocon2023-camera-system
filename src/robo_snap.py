@@ -60,6 +60,7 @@ class RoboSnap:
                 # 何回も実行するので、エラー文は省略
                 continue
             return img_name
+        return None
 
     def check_exist(self, path) -> bool:
         """ファイルもしくはディレクトリが存在するか確認する関数.
@@ -175,6 +176,9 @@ class RoboSnap:
                 while True:  # 画像が見つかるまでループ
                     # 画像の受信試み
                     img_name = self.scp_fig_image()
+
+                    if img_name is None:
+                        continue
 
                     # 受信できたか確認
                     img_path = os.path.join(self.img_dir_path, img_name)
