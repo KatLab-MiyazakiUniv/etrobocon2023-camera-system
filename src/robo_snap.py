@@ -218,13 +218,13 @@ class RoboSnap:
                 # ベストショット確定だと判断した場合
                 if score == 5:
                     best_shot_img = img_name
+                    # 候補画像のアップロード
                     if OfficialInterface.upload_snap(processed_img_path):
                         successful_send_best_shot = True
 
                     # skipフラグをTrueに変更
                     client = Client(self.raspike_ip)
                     client.set_true_camera_action_skip()
-
                     break
 
                 elif score > max_score:
