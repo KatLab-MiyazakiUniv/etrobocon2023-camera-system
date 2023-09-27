@@ -43,7 +43,7 @@ class CameraSystem:
                 tt.observe()
 
                 # ロボコンスナップ攻略開始
-                snap = RoboSnap(self.raspike_ip)
+                snap = RoboSnap(server_ip)
                 snap.start_snap()
             else:
                 print(state)
