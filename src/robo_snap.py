@@ -18,11 +18,11 @@ class RoboSnap:
 
     # NOTE:FigB.pngを優先したいのでlistの最初
     img_list = [
-                "FigA_1.png",
-                "FigB.png",
-                "FigA_2.png",
-                "FigA_3.png",
-                "FigA_4.png"]
+        "FigA_1.png",
+        "FigB.png",
+        "FigA_2.png",
+        "FigA_3.png",
+        "FigA_4.png"]
 
     fig_img_B = "FigB.png"
 
@@ -173,7 +173,6 @@ class RoboSnap:
         # 物体検出のパラメータはデフォルト通り
         d = DetectObject()
 
-        # 最終結果表示用変数の定義
         successful_send_fig_B = False
         best_shot_img = None
         successful_send_best_shot = False
@@ -192,26 +191,20 @@ class RoboSnap:
 
                     time.sleep(2)
 
-                # 鮮明化
-                processed_img_path = os.path.join(
-                    self.img_dir_path, "processed_"+img_name)
-                ImageProcessing.sharpen_image(img_path=img_path,
-                                              save_path=processed_img_path)
-
-                # リサイズ
-                ImageProcessing.resize_img(img_path=processed_img_path,
-                                           save_path=processed_img_path)
-
+                # 配置エリアBの画像を取得した時の処理
                 if img_name == self.fig_img_B:
                     # 配置エリアBの画像は検出せずにアップロード
-                    if OfficialInterface.upload_snap(processed_img_path):
+                    if OfficialInterface.upload_snap(img_path):
                         successful_send_fig_B = True
+                    # 配置エリアAで画像をuploadしている場合、終了する.
+                    if successful_send_best_shot:
+                        break
                     continue
 
                 # 物体検出
                 detected_img_path = os.path.join(
                     self.img_dir_path, "detected_"+img_name)
-                objects = d.detect_object(img_path=processed_img_path,
+                objects = d.detect_object(img_path=img_path,
                                           save_path=detected_img_path)
 
                 # ベストショット画像らしさスコア算出
@@ -224,21 +217,24 @@ class RoboSnap:
                 if score == 5:
                     best_shot_img = img_name
                     # 候補画像のアップロード
-                    if not OfficialInterface.upload_snap(processed_img_path):
-                        continue
+                    if OfficialInterface.upload_snap(img_path):
+                        successful_send_best_shot = True
 
-                    successful_send_best_shot = True
-
-                    # skipフラグをTrueに変更
+                    # Skipフラグを立てる
                     client = Client(self.raspike_ip)
                     client.set_true_camera_action_skip()
-                    if successful_send_fig_B:
+
+                    # 配置エリアA,Bで画像をuploadしている場合、終了する.
+                    # NOTE: successful_send_best_shotも条件に入れることで
+                    #       upload失敗時、候補画像のuploadを試みる
+                    if successful_send_best_shot and successful_send_fig_B:
                         break
+                    continue
 
                 elif score > max_score:
                     # 候補画像の更新
                     candidate_img = img_name
-                    candidate_img_path = processed_img_path
+                    candidate_img_path = img_path
                     max_score = score
 
             # ベストショット確定と判断できる画像がなかった場合
@@ -248,9 +244,9 @@ class RoboSnap:
                     successful_send_candidate = True
         finally:
             print("\n- 実行結果")
-            print(f"-      FigB image: {str(self.fig_img_B):>10},  success:{str(successful_send_fig_B):>10}")  # noqa
-            print(f"- best shot image: {str(best_shot_img):>10},  success:{str(successful_send_best_shot):>10}")  # noqa
-            print(f"- candidate image: {str(candidate_img):>10},  success:{str(successful_send_candidate):>10}\n")  # noqa
+            print(f"-      FigB Image: {str(self.fig_img_B):>10},  Upload:{str(successful_send_fig_B):>10}")  # noqa
+            print(f"- Best Shot Image: {str(best_shot_img):>10},  Upload:{str(successful_send_best_shot):>10}")  # noqa
+            print(f"- Candidate Image: {str(candidate_img):>10},  Upload:{str(successful_send_candidate):>10}\n")  # noqa
 
 
 if __name__ == "__main__":
