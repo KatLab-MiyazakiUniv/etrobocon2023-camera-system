@@ -24,7 +24,7 @@ class Client:
         Returns:
             response_text: 走行体の状態
         """
-        url = f"http://{self.server_ip}/robot_info/state"
+        url = f"http://{self.server_ip}:8000/robot_info/state"
         req = urllib.request.Request(url)
         response_text = ""
 
@@ -51,7 +51,7 @@ class Client:
         Returns:
             success (bool): 通信が成功したか(成功:true/失敗:false)
         """
-        url = f"http://{self.server_ip}/robot_info/skip_camera_action_true"
+        url = f"http://{self.server_ip}:8000/robot_info/skip_camera_action_true"
         req = urllib.request.Request(url)
 
         try:

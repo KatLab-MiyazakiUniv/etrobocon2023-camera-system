@@ -23,8 +23,7 @@ class CameraSystem:
         # キャリブレーション後に走行体状態取得モジュールを実行する
         # sever_ipは、Bluetooth接続なら172.20.1.1
         # Wi-Fi接続なら、走行体１は192.168.11.16、走行体２は192.168.11.17
-        server_ip = self.raspike_ip + ":8000"
-        client = Client(server_ip)
+        client = Client(self.raspike_ip)
         pre_state = ""
 
         # Webカメラのキャリブレーション
@@ -43,7 +42,7 @@ class CameraSystem:
                 tt.observe()
 
                 # ロボコンスナップ攻略開始
-                snap = RoboSnap(server_ip)
+                snap = RoboSnap(self.raspike_ip)
                 snap.start_snap()
             else:
                 print(state)
