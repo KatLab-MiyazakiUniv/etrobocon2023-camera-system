@@ -17,8 +17,9 @@ class RoboSnap:
     """ロボコンスナップ攻略クラス."""
 
     # NOTE:FigB.pngを優先したいのでlistの最初
-    img_list = ["FigB.png",
+    img_list = [
                 "FigA_1.png",
+                "FigB.png",
                 "FigA_2.png",
                 "FigA_3.png",
                 "FigA_4.png"]
@@ -61,10 +62,8 @@ class RoboSnap:
                 # 受信できたか確認
                 img_path = os.path.join(self.img_dir_path, img_name)
                 if not self.check_exist(img_path):
-                    print(f"{img_name} is not exist")
                     continue
                 else:
-                    print(f"{img_name} is exist")
                     self.img_list.remove(img_name)
                     return img_name, img_path
 
@@ -169,7 +168,7 @@ class RoboSnap:
         """ロボコンスナップを攻略する."""
 
         # 画像を格納するディレクトリの作成
-        # self.set_up()
+        self.set_up()
 
         # 物体検出のパラメータはデフォルト通り
         d = DetectObject()
@@ -233,7 +232,8 @@ class RoboSnap:
                     # skipフラグをTrueに変更
                     client = Client(self.raspike_ip)
                     client.set_true_camera_action_skip()
-                    break
+                    if successful_send_fig_B:
+                        break
 
                 elif score > max_score:
                     # 候補画像の更新
