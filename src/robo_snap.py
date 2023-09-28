@@ -181,7 +181,6 @@ class RoboSnap:
 
     def start_snap(self) -> None:
         """ロボコンスナップを攻略する."""
-
         # 画像を格納するディレクトリの作成
         self.set_up()
 
