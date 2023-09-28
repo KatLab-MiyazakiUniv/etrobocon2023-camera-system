@@ -18,8 +18,8 @@ class RoboSnap:
 
     # NOTE:FigB.pngを優先したいのでlistの最初
     img_list = [
-        "FigA_1.png",
         "FigB.png",
+        "FigA_1.png",
         "FigA_2.png",
         "FigA_3.png",
         "FigA_4.png"]
@@ -48,7 +48,6 @@ class RoboSnap:
         self.candidate_img = None
         self.candidate_img_path = None
         self.successful_send_candidate = False
-
 
     def set_up(self) -> None:
         """画像を入れるディレクトリを作り直す関数."""
@@ -217,8 +216,8 @@ class RoboSnap:
                     self.img_dir_path, "detected_"+img_name)
                 try:
                     objects = d.detect_object(img_path=img_path,
-                                          save_path=detected_img_path)
-                except:
+                                              save_path=detected_img_path)
+                except Exception as e:
                     objects = []
 
                 # ベストショット画像らしさスコア算出
@@ -243,11 +242,11 @@ class RoboSnap:
                     else:
                         print("Failed Skip Flag")
 
-
                     # 配置エリアA,Bで画像をuploadしている場合、終了する.
                     # NOTE: successful_send_best_shotも条件に入れることで
                     #       upload失敗時、候補画像のuploadを試みる
-                    if self.successful_send_best_shot and self.successful_send_fig_B:
+                    if self.successful_send_best_shot and\
+                            self.successful_send_fig_B:
                         break
                     continue
 
@@ -266,20 +265,21 @@ class RoboSnap:
             self.show_result()
             change_flag = False
             if (self.candidate_img_path is not None) and \
-                (self.successful_send_candidate is False):
+                    (self.successful_send_candidate is False):
                 print("競技システムへのUpload")
                 if OfficialInterface.upload_snap(self.candidate_img_path):
                     self.successful_send_candidate = True
                     change_flag = True
 
             if (self.fig_B_img_path is not None) and \
-                (self.successful_send_fig_B is False):
+                    (self.successful_send_fig_B is False):
                 print("競技システムへのUpload")
                 if OfficialInterface.upload_snap(self.fig_B_img_path):
                     self.successful_send_fig_B = True
                     change_flag = True
 
-            if change_flag: self.show_result()
+            if change_flag:
+                self.show_result()
 
 
 if __name__ == "__main__":
