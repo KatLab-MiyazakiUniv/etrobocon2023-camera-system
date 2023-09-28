@@ -265,8 +265,8 @@ class RoboSnap:
             self.show_result()
             change_flag = False
             if (self.candidate_img_path is not None) and \
-                    (self.successful_send_candidate is False) and \
-                        (self.successful_send_best_shot is False):
+                (self.successful_send_candidate is False) and \
+                    (self.successful_send_best_shot is False):
                 print("競技システムへのUpload")
                 if OfficialInterface.upload_snap(self.candidate_img_path):
                     self.successful_send_candidate = True
