@@ -41,6 +41,15 @@ class RoboSnap:
         """
         self.raspike_ip = raspike_ip
 
+        self.fig_B_img_path = None
+        self.successful_send_fig_B = False
+        self.best_shot_img = None
+        self.successful_send_best_shot = False
+        self.candidate_img = None
+        self.candidate_img_path = None
+        self.successful_send_candidate = False
+
+
     def set_up(self) -> None:
         """画像を入れるディレクトリを作り直す関数."""
         if self.check_exist(self.img_dir_path):
@@ -164,6 +173,13 @@ class RoboSnap:
         else:
             return 0
 
+    def show_result(self):
+        """最終結果を表示する."""
+        print("\n- 実行結果")
+        print(f"-      FigB Image: {str(self.fig_img_B):>10},  Upload:{str(self.successful_send_fig_B):>10}")  # noqa
+        print(f"- Best Shot Image: {str(self.best_shot_img):>10},  Upload:{str(self.successful_send_best_shot):>10}")  # noqa
+        print(f"- Candidate Image: {str(self.candidate_img):>10},  Upload:{str(self.successful_send_candidate):>10}\n")  # noqa
+
     def start_snap(self) -> None:
         """ロボコンスナップを攻略する."""
 
@@ -172,12 +188,6 @@ class RoboSnap:
 
         # 物体検出のパラメータはデフォルト通り
         d = DetectObject()
-
-        successful_send_fig_B = False
-        best_shot_img = None
-        successful_send_best_shot = False
-        candidate_img = None
-        successful_send_candidate = False
 
         try:
             for _ in range(len(self.img_list)):
@@ -193,19 +203,23 @@ class RoboSnap:
 
                 # 配置エリアBの画像を取得した時の処理
                 if img_name == self.fig_img_B:
+                    self.fig_B_img_path = img_path
                     # 配置エリアBの画像は検出せずにアップロード
-                    if OfficialInterface.upload_snap(img_path):
-                        successful_send_fig_B = True
+                    if OfficialInterface.upload_snap(self.fig_B_img_path):
+                        self.successful_send_fig_B = True
                     # 配置エリアAで画像をuploadしている場合、終了する.
-                    if successful_send_best_shot:
+                    if self.successful_send_best_shot:
                         break
                     continue
 
                 # 物体検出
                 detected_img_path = os.path.join(
                     self.img_dir_path, "detected_"+img_name)
-                objects = d.detect_object(img_path=img_path,
+                try:
+                    objects = d.detect_object(img_path=img_path,
                                           save_path=detected_img_path)
+                except:
+                    objects = []
 
                 # ベストショット画像らしさスコア算出
                 try:
@@ -215,14 +229,14 @@ class RoboSnap:
 
                 # ベストショット確定だと判断した場合
                 if score == 5:
-                    best_shot_img = img_name
+                    self.best_shot_img = img_name
                     # 候補画像のアップロード
                     if OfficialInterface.upload_snap(img_path):
                         # Skipフラグを立てる
                         client = Client(self.raspike_ip)
                         success = client.set_true_camera_action_skip()
 
-                        successful_send_best_shot = True
+                        self.successful_send_best_shot = True
 
                     if success:
                         print("Success Skip Flag")
@@ -233,26 +247,39 @@ class RoboSnap:
                     # 配置エリアA,Bで画像をuploadしている場合、終了する.
                     # NOTE: successful_send_best_shotも条件に入れることで
                     #       upload失敗時、候補画像のuploadを試みる
-                    if successful_send_best_shot and successful_send_fig_B:
+                    if self.successful_send_best_shot and self.successful_send_fig_B:
                         break
                     continue
 
                 elif score > max_score:
                     # 候補画像の更新
-                    candidate_img = img_name
-                    candidate_img_path = img_path
+                    self.candidate_img = img_name
+                    self.candidate_img_path = img_path
                     max_score = score
 
             # ベストショット確定と判断できる画像がなかった場合
-            if successful_send_best_shot is False:
+            if self.successful_send_best_shot is False:
                 # 候補画像のアップロード
-                if OfficialInterface.upload_snap(candidate_img_path):
-                    successful_send_candidate = True
+                if OfficialInterface.upload_snap(self.candidate_img_path):
+                    self.successful_send_candidate = True
         finally:
-            print("\n- 実行結果")
-            print(f"-      FigB Image: {str(self.fig_img_B):>10},  Upload:{str(successful_send_fig_B):>10}")  # noqa
-            print(f"- Best Shot Image: {str(best_shot_img):>10},  Upload:{str(successful_send_best_shot):>10}")  # noqa
-            print(f"- Candidate Image: {str(candidate_img):>10},  Upload:{str(successful_send_candidate):>10}\n")  # noqa
+            self.show_result()
+            change_flag = False
+            if (self.candidate_img_path is not None) and \
+                (self.successful_send_candidate is False):
+                print("競技システムへのUpload")
+                if OfficialInterface.upload_snap(self.candidate_img_path):
+                    self.successful_send_candidate = True
+                    change_flag = True
+
+            if (self.fig_B_img_path is not None) and \
+                (self.successful_send_fig_B is False):
+                print("競技システムへのUpload")
+                if OfficialInterface.upload_snap(self.fig_B_img_path):
+                    self.successful_send_fig_B = True
+                    change_flag = True
+
+            if change_flag: self.show_result()
 
 
 if __name__ == "__main__":
