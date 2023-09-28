@@ -218,11 +218,17 @@ class RoboSnap:
                     best_shot_img = img_name
                     # 候補画像のアップロード
                     if OfficialInterface.upload_snap(img_path):
+                        # Skipフラグを立てる
+                        client = Client(self.raspike_ip)
+                        success = client.set_true_camera_action_skip()
+
                         successful_send_best_shot = True
 
-                    # Skipフラグを立てる
-                    client = Client(self.raspike_ip)
-                    client.set_true_camera_action_skip()
+                    if success:
+                        print("Success Skip Flag")
+                    else:
+                        print("Failed Skip Flag")
+
 
                     # 配置エリアA,Bで画像をuploadしている場合、終了する.
                     # NOTE: successful_send_best_shotも条件に入れることで
