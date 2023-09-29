@@ -41,7 +41,7 @@ class DetectObject():
 
     def __init__(self,
                  weights=YOLO_PATH/'learned_fig_weight_ver2.pt',
-                #  weights=YOLO_PATH/'learned_fig_weight.pt',
+                 #  weights=YOLO_PATH/'learned_fig_weight.pt',
                  label_data=YOLO_PATH/'fig_label.yaml',
                  conf_thres=0.6,
                  iou_thres=0.45,

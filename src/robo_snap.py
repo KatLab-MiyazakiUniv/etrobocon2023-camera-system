@@ -26,6 +26,8 @@ class RoboSnap:
 
     fig_img_B = "FigB.png"
 
+    priority_candidate_img = "FigA_2.png"
+
     # NOTE:powershellの場合、絶対パスでbashファイルが実行できない？
     #      よってcamera-system下での実装に対応
     bash_path = "copy_fig.sh"
@@ -188,8 +190,8 @@ class RoboSnap:
         d = DetectObject()
 
         try:
+            max_score = -1  # score初期値
             for _ in range(len(self.img_list)):
-                max_score = -1  # score初期値
                 while True:  # 画像が見つかるまでループ
                     # 画像の受信試み
                     img_name, img_path = self.scp_fig_image()
@@ -254,6 +256,11 @@ class RoboSnap:
                     self.candidate_img = img_name
                     self.candidate_img_path = img_path
                     max_score = score
+
+                    # もし、FigA_1,2,3,4がナイスショット以下だった場合、2を優先する
+                    if (img_name == self.priority_candidate_img) and \
+                            score >= 3:
+                        max_score += 2
 
             # ベストショット確定と判断できる画像がなかった場合
             if self.successful_send_best_shot is False:
