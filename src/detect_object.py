@@ -217,7 +217,7 @@ if __name__ == '__main__':
                         default=1, help='バウンディングボックスの太さ')
     parser.add_argument("--stride", type=int, default=32, help='ストライド')
     parser.add_argument("-img", "--img_path", type=str,
-                        default=IMAGE_DIR_PATH/'FigA_3.png', help='入力画像')
+                        default=IMAGE_DIR_PATH/'FigA_1.png', help='入力画像')
     parser.add_argument("-spath", "--save_path", type=str,
                         default=save_path, help='検出画像の保存先. Noneの場合保存しない')
     args = parser.parse_args()

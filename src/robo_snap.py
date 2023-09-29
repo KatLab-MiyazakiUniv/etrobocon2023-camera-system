@@ -188,8 +188,8 @@ class RoboSnap:
         d = DetectObject()
 
         try:
+            max_score = -1  # score初期値
             for _ in range(len(self.img_list)):
-                max_score = -1  # score初期値
                 while True:  # 画像が見つかるまでループ
                     # 画像の受信試み
                     img_name, img_path = self.scp_fig_image()
