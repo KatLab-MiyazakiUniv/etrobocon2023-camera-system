@@ -251,7 +251,7 @@ class RoboSnap:
                         break
                     continue
 
-                elif score > max_score:
+                elif score >= max_score:
                     # 候補画像の更新
                     self.candidate_img = img_name
                     self.candidate_img_path = img_path
