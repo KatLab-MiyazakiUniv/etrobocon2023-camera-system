@@ -13,7 +13,7 @@ from robo_snap import RoboSnap
 class CameraSystem:
     """カメラシステムクラス."""
 
-    def __init__(self, raspike_ip="172.20.1.1") -> None:
+    def __init__(self, raspike_ip="192.168.137.57") -> None:
         """カメラシステムのコンストラクタ."""
         self.raspike_ip = raspike_ip
 

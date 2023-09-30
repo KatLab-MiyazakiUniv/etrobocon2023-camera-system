@@ -34,7 +34,7 @@ class RoboSnap:
     img_dir_path = os.path.join(PROJECT_DIR_PATH, "fig_image")
 
     def __init__(self,
-                 raspike_ip="172.20.1.1",
+                 raspike_ip="192.168.137.57",
                  ) -> None:
         """コンストラクタ.
 
