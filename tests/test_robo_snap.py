@@ -42,15 +42,12 @@ class TestRoboSnap:
             delete_img(path1)
             delete_img(path2)
 
-    @mock.patch("src.robo_snap.RoboSnap.set_up")
     @mock.patch("src.robo_snap.DetectObject.detect_object")
     @mock.patch("src.robo_snap.OfficialInterface.upload_snap")
     def test_start_snap(self,
                         mock_upload_snap,
-                        mock_detect_object,
-                        mock_set_up):
+                        mock_detect_object):
         """ロボコンスナップ攻略クラスのテスト."""
-        mock_set_up.return_value = None
         mock_detect_object.return_value = []
         mock_upload_snap.return_value = False
         assert self.snap.start_snap() is None

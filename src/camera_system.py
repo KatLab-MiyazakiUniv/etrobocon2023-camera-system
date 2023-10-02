@@ -3,11 +3,17 @@
 カメラシステムにおいて、一番最初に呼ばれるクラスを定義している
 @author: kawanoichi aridome222 miyashita64
 """
+import os
 import time
+import shutil
+from datetime import datetime
 
 from client import Client
 from train_tracker import TrainTracker
 from robo_snap import RoboSnap
+
+script_dir = os.path.dirname(os.path.abspath(__file__))  # noqa
+PROJECT_DIR_PATH = os.path.dirname(script_dir)
 
 
 class CameraSystem:
@@ -17,9 +23,36 @@ class CameraSystem:
         """カメラシステムのコンストラクタ."""
         self.raspike_ip = raspike_ip
 
+    @staticmethod
+    def mkdir_fig_img() -> None:
+        """フィグ画像を格納するディレクトリの作成.
+
+        NOTE:すでにfig_imageが存在する場合はbackup_fig_imageに移動させる
+        """
+        img_dir_path = os.path.join(PROJECT_DIR_PATH, "fig_image")
+        backup_dir = os.path.join(PROJECT_DIR_PATH, "backup_fig_image")
+
+        if os.path.exists(img_dir_path):
+            now_time = str(datetime.now())
+            now_time = now_time.replace(" ", "_")
+            now_time = now_time.replace(":", "-")
+
+            if not os.path.exists(backup_dir):
+                os.mkdir(backup_dir)
+
+            source = img_dir_path
+            destination = os.path.join(backup_dir, now_time[5:19])
+            shutil.copytree(source, destination)
+
+            shutil.rmtree(img_dir_path)
+        os.mkdir(img_dir_path)
+
     def start(self) -> None:
         """ゲーム攻略を計画する."""
         print("camera-system start!!")
+
+        self.mkdir_fig_img()
+
         # キャリブレーション後に走行体状態取得モジュールを実行する
         # sever_ipは、Bluetooth接続なら172.20.1.1
         # Wi-Fi接続なら、走行体１は192.168.11.16、走行体２は192.168.11.17
