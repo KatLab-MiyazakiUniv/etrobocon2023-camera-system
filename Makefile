@@ -36,6 +36,3 @@ all:
 
 snap:
 	poetry run python src/robo_snap.py
-
-zikken:
-	poetry run python src/zikken.py

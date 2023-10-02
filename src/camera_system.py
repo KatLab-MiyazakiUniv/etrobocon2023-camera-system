@@ -35,16 +35,16 @@ class CameraSystem:
         if os.path.exists(img_dir_path):
             now_time = str(datetime.now())
             now_time = now_time.replace(" ", "_")
-            now_time = now_time.replace(":", "-")
+            now_time = now_time[5:19]
+            now_time = now_time[:8] + 'h' + \
+                now_time[9:11] + 'm' + now_time[12:15] + 's'
 
             if not os.path.exists(backup_dir):
                 os.mkdir(backup_dir)
 
-            source = img_dir_path
-            destination = os.path.join(backup_dir, now_time[5:19])
-            shutil.copytree(source, destination)
+            destination = os.path.join(backup_dir, now_time)
+            shutil.move(img_dir_path, destination)
 
-            shutil.rmtree(img_dir_path)
         os.mkdir(img_dir_path)
 
     def start(self) -> None:
