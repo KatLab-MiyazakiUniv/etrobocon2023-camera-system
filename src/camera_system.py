@@ -32,19 +32,22 @@ class CameraSystem:
         img_dir_path = os.path.join(PROJECT_DIR_PATH, "fig_image")
         backup_dir = os.path.join(PROJECT_DIR_PATH, "backup_fig_image")
 
+        # fig_imageディレクトリが存在する場合
         if os.path.exists(img_dir_path):
-            now_time = str(datetime.now())
-            now_time = now_time.replace(" ", "_")
-            now_time = now_time[5:19]
-            now_time = now_time[:8] + 'h' + \
-                now_time[9:11] + 'm' + now_time[12:15] + 's'
-
-            if not os.path.exists(backup_dir):
-                os.mkdir(backup_dir)
-
-            destination = os.path.join(backup_dir, now_time)
-            shutil.move(img_dir_path, destination)
-
+            # fig_imageの中にファイルが存在する場合
+            if len(os.listdir(img_dir_path)):
+                now_time = datetime.now().strftime("%m-%d_%Hh%Mm%Ss")
+                if not os.path.exists(backup_dir):
+                    # backup_fig_image作成
+                    os.mkdir(backup_dir)
+                # 移動先パス
+                destination = os.path.join(backup_dir, now_time)
+                # 移動
+                shutil.move(img_dir_path, destination)
+            else:
+                # fig_image削除
+                shutil.rmtree(img_dir_path)
+        # fig_image作成
         os.mkdir(img_dir_path)
 
     def start(self) -> None:
