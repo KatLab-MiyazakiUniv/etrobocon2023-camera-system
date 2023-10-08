@@ -81,6 +81,8 @@ class RoboSnap:
                 self.img_list.remove(img_name)
                 return img_name, img_path
 
+        return None, None
+
     def check_bestshot(self, objects) -> int:
         """ベストショット画像らしさスコアの算出.
 
@@ -217,6 +219,7 @@ class RoboSnap:
                 # ベストショット確定だと判断した場合
                 if score == 5:
                     self.best_shot_img = img_name
+                    self.best_shot_img_path = img_path
                     # 候補画像のアップロード
                     if OfficialInterface.upload_snap(img_path):
                         # Skipフラグを立てる
