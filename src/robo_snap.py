@@ -49,16 +49,18 @@ class RoboSnap:
         self.fig_B_img_path = None
         self.successful_send_fig_B = False
         self.best_shot_img = None
+        self.best_shot_img_path = None
         self.successful_send_best_shot = False
         self.candidate_img = None
         self.candidate_img_path = None
         self.successful_send_candidate = False
 
-    def scp_fig_image(self) -> str:
+    def scp_fig_image(self) -> (str, str):
         """走行体からフィグ画像を取得するbashファイルを実行する関数.
 
         Returns:
             img_name(str): ファイル(画像)名
+            img_path(str): 画像パス
         """
         for img_name in self.img_list:
             bash_command = \
@@ -159,13 +161,9 @@ class RoboSnap:
         else:
             return 0
 
-    def show_result(self, title: str) -> None:
-        """最終結果を表示する.
-
-        Args:
-            title(str): 表のタイトル
-        """
-        print(f"\n- {title}")
+    def show_result(self) -> None:
+        """最終結果を表示する."""
+        print(f"\n- 最終結果")
         print(f"-      FigB Image: {str(self.fig_img_B):>10},  Upload:{str(self.successful_send_fig_B):>10}")  # noqa
         print(f"- Best Shot Image: {str(self.best_shot_img):>10},  Upload:{str(self.successful_send_best_shot):>10}")  # noqa
         print(f"- Candidate Image: {str(self.candidate_img):>10},  Upload:{str(self.successful_send_candidate):>10}\n")  # noqa
@@ -240,9 +238,9 @@ class RoboSnap:
                         break
                     continue
 
-                # ベストショット出ない場合
+                # ベストショット確定でない場合
                 else:
-                    # ベストショットがなく、優先画像がベストショット以上の場合、
+                    # ベストショットがなく、優先画像がナイスショット以上の場合、
                     # 優先画像を優先する
                     if img_name == self.priority_candidate_img and \
                             score >= 3:
@@ -262,6 +260,11 @@ class RoboSnap:
 
         finally:
             """タイムアップやエラーなどで終了した際の送信試み."""
+            if (self.best_shot_img_path is not None) and \
+                    (self.successful_send_best_shot is False):
+                if OfficialInterface.upload_snap(self.best_shot_img_path):
+                    self.successful_send_best_shot = True
+
             if (self.candidate_img_path is not None) and \
                 (self.successful_send_candidate is False) and \
                     (self.successful_send_best_shot is False):
@@ -274,7 +277,7 @@ class RoboSnap:
                     self.successful_send_fig_B = True
 
             # 結果表示
-            self.show_result("最終結果")
+            self.show_result()
 
 
 if __name__ == "__main__":

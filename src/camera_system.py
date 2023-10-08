@@ -41,9 +41,9 @@ class CameraSystem:
                     # backup_fig_image作成
                     os.mkdir(backup_dir)
                 # 移動先パス
-                destination = os.path.join(backup_dir, now_time)
+                backup_path = os.path.join(backup_dir, now_time)
                 # 移動
-                shutil.move(img_dir_path, destination)
+                shutil.move(img_dir_path, backup_path)
             else:
                 # fig_image削除
                 shutil.rmtree(img_dir_path)
