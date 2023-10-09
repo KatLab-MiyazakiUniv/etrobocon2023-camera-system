@@ -31,7 +31,8 @@ class TrainTracker:
             cv2.setMouseCallback(WINDOW_NAME, self.mouse_callback)
 
             # 入力された数字をカメラIDとして扱う
-            print("Press key for the camera ID with focus on the Calibration window.")
+            print("Press key for the camera ID \
+                  with focus on the Calibration window.")
             key = cv2.waitKey(0)
             # 数字が入力されるまで入力を要求する
             while not chr(key).isdecimal():
@@ -42,7 +43,8 @@ class TrainTracker:
                 camera = CameraInterface(camera_id)
                 success, _ = camera.get_frame()
                 if not success:
-                    raise Exception(f"Error: Unable to access a camera with camera ID {camera_id}.")
+                    raise Exception(f"Error: Unable to access \
+                                    a camera with camera ID {camera_id}.")
             # CameraInterfaceのインスタンス化に失敗した場合、再度カメラIDの入力にもどる
             except Exception as error:
                 print(error)
@@ -51,7 +53,8 @@ class TrainTracker:
             # 録画を開始する
             video, mark_video = camera.start_record()
             # クリックされた領域を監視対象とする。"q"キーで決定, "r"キーでカメラID再入力
-            print("Click the upper left and lower right of the area to observe and press the 'q' key.")
+            print("Click the upper left and lower right of the area \
+                  to observe and press the 'q' key.")
             print("If switching camera, press the 'r' key.")
             while True:
                 # フレームを取得
@@ -132,13 +135,15 @@ class TrainTracker:
                 break
 
             # 列車の検出
-            mark_frame, train_rect_points = self.detect_train(frame, initial_frame)
+            mark_frame, train_rect_points = self.detect_train(
+                frame, initial_frame)
             # クリックされた領域の描画
             mark_frame = self.draw_observe_rect(mark_frame)
 
             if len(train_rect_points) >= 2:
-                # 列車の境界 (左,上(使用しない)),(右,下) 
-                (train_left, _), (train_right, train_bottom) = train_rect_points
+                # 列車の境界 (左,上(使用しない)),(右,下)
+                (train_left, _), (train_right,
+                                  train_bottom) = train_rect_points
                 # 描画した指定領域
                 observe_y_values = [y for _, y in self.observe_rect_points]
                 observe_x_values = [x for x, _ in self.observe_rect_points]
