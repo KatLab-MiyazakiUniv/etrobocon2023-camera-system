@@ -6,21 +6,30 @@ import os
 import time
 import numpy as np
 
-from detect_object import DetectObject, PROJECT_DIR_PATH
-from image_processing import ImageProcessing
+from detect_object import DetectObject
 from official_interface import OfficialInterface
 from client import Client
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR_PATH = os.path.dirname(script_dir)
+
 
 class RoboSnap:
     """ロボコンスナップ攻略クラス."""
 
-    img_list = ["FigA_1.png",
-                "FigA_2.png",
-                "FigA_3.png",
-                "FigA_4.png",
-                "FigB.png"]
+    # NOTE:FigB.pngを優先したいのでlistの最初
+    img_list = [
+        "FigB.png",
+        "FigA_1.png",
+        "FigA_2.png",
+        "FigA_3.png",
+        "FigA_4.png"]
 
     fig_img_B = "FigB.png"
+
+    # NOTE:物体検出でFigA_2は顔の認識が距離的に苦手なため、
+    #      ベストショットがなかった場合にFigA_2を優先する。
+    priority_candidate_img = "FigA_2.png"
 
     # NOTE:powershellの場合、絶対パスでbashファイルが実行できない？
     #      よってcamera-system下での実装に対応
@@ -28,7 +37,7 @@ class RoboSnap:
     img_dir_path = os.path.join(PROJECT_DIR_PATH, "fig_image")
 
     def __init__(self,
-                 raspike_ip="192.168.11.16",
+                 raspike_ip="172.20.1.1",
                  ) -> None:
         """コンストラクタ.
 
@@ -37,28 +46,41 @@ class RoboSnap:
         """
         self.raspike_ip = raspike_ip
 
-    def scp_fig_image(self) -> None:
-        """走行体からフィグ画像を取得するbashファイルを実行する関数."""
-        for img in self.img_list:
-            bash_command = f"bash {self.bash_path} {self.raspike_ip} {img}"
-            try:
-                os.system(bash_command)
-            except Exception:
-                # 何回も実行するので、エラー文は省略
-                pass
+        self.fig_B_img_path = None
+        self.successful_send_fig_B = False
+        self.best_shot_img = None
+        self.best_shot_img_path = None
+        self.successful_send_best_shot = False
+        self.candidate_img = None
+        self.candidate_img_path = None
+        self.successful_send_candidate = False
 
-    def exist_image(self) -> (str, str):
-        """画像が送られてきたかどうかの確認関数.
+    def scp_fig_image(self) -> (str, str):
+        """走行体からフィグ画像を取得するbashファイルを実行する関数.
 
         Returns:
-            img_name(str): 画像ファイル名
+            img_name(str): ファイル(画像)名
             img_path(str): 画像パス
         """
         for img_name in self.img_list:
+            bash_command = \
+                f"bash {self.bash_path} {self.raspike_ip} {img_name}"
+            try:
+                os.system(bash_command)
+
+            except Exception:
+                print("Error: scp execution failed")
+                continue
+
+            # 受信できたか確認
             img_path = os.path.join(self.img_dir_path, img_name)
-            if os.path.exists(img_path):
+            if not os.path.exists(img_path):
+                continue
+
+            else:
                 self.img_list.remove(img_name)
                 return img_name, img_path
+
         return None, None
 
     def check_bestshot(self, objects) -> int:
@@ -141,71 +163,127 @@ class RoboSnap:
         else:
             return 0
 
+    def show_result(self) -> None:
+        """最終結果を表示する."""
+        print(f"\n- 最終結果")
+        print(f"-      FigB Image: {str(self.fig_img_B):>10},  Upload:{str(self.successful_send_fig_B):>10}")  # noqa
+        print(f"- Best Shot Image: {str(self.best_shot_img):>10},  Upload:{str(self.successful_send_best_shot):>10}")  # noqa
+        print(f"- Candidate Image: {str(self.candidate_img):>10},  Upload:{str(self.successful_send_candidate):>10}\n")  # noqa
+
     def start_snap(self) -> None:
         """ロボコンスナップを攻略する."""
         # 物体検出のパラメータはデフォルト通り
         d = DetectObject()
 
-        sent_to_official = False
-        for _ in range(len(self.img_list)):
+        try:
             max_score = -1  # score初期値
-            while True:  # 画像が見つかるまでループ
-                # 画像の受信試み
-                self.scp_fig_image()
+            for _ in range(len(self.img_list)):
 
-                # 受信できたか確認
-                img_name, img_path = self.exist_image()
-                if img_path is not None:
-                    break
-                time.sleep(2)
-            # 鮮明化
-            processed_img_path = os.path.join(
-                self.img_dir_path, "processed_"+img_name)
-            ImageProcessing.sharpen_image(img_path=img_path,
-                                          save_path=processed_img_path)
+                # 走行体から画像を取得
+                while True:  # 画像が見つかるまでループ
+                    # 画像の受信試み
+                    img_name, img_path = self.scp_fig_image()
 
-            # リサイズ
-            ImageProcessing.resize_img(img_path=processed_img_path,
-                                       save_path=processed_img_path)
+                    if img_name is not None:
+                        break
 
-            if img_name == self.fig_img_B:
-                # 配置エリアBの画像は検出せずにアップロード
-                OfficialInterface.upload_snap(processed_img_path)
-                continue
+                    time.sleep(2)
 
-            # 物体検出
-            detected_img_path = os.path.join(
-                self.img_dir_path, "detected_"+img_name)
-            objects = d.detect_object(img_path=processed_img_path,
-                                      save_path=detected_img_path)
+                # 配置エリアBの画像を取得した時の処理
+                if img_name == self.fig_img_B:
+                    self.fig_B_img_path = img_path
+                    # 配置エリアBの画像は検出せずにアップロード
+                    if OfficialInterface.upload_snap(self.fig_B_img_path):
+                        self.successful_send_fig_B = True
+                    # 配置エリアAで画像をuploadしている場合、終了する.
+                    if self.successful_send_best_shot:
+                        break
+                    continue
 
-            # ベストショット画像らしさスコア算出
-            try:
-                score = self.check_bestshot(objects)
-            except Exception as e:
-                score = 0
+                # 物体検出
+                detected_img_path = os.path.join(
+                    self.img_dir_path, "detected_"+img_name)
+                try:
+                    objects = d.detect_object(img_path=img_path,
+                                              save_path=detected_img_path)
+                except Exception:
+                    print("Error: detect failed")
+                    objects = []
 
-            # ベストショット確定だと判断した場合
-            if score == 5:
-                OfficialInterface.upload_snap(processed_img_path)
-                sent_to_official = True
-                client = Client(self.raspike_ip)
-                client.set_true_camera_action_skip()
-                break
+                # ベストショット画像らしさスコア算出
+                try:
+                    score = self.check_bestshot(objects)
+                except Exception as e:
+                    score = 0
 
-            elif score > max_score:
-                # 候補画像の更新
-                candidate_img_path = processed_img_path
-                max_score = score
+                # ベストショット確定だと判断した場合
+                if score == 5:
+                    self.best_shot_img = img_name
+                    self.best_shot_img_path = img_path
+                    # 候補画像のアップロード
+                    if OfficialInterface.upload_snap(img_path):
+                        # Skipフラグを立てる
+                        client = Client(self.raspike_ip)
+                        success = client.set_true_camera_action_skip()
 
-        # ベストショット確定と判断できる画像がなかった場合
-        if sent_to_official is False:
-            # 候補画像のアップロード
-            OfficialInterface.upload_snap(candidate_img_path)
+                        self.successful_send_best_shot = True
+
+                    if success:
+                        print("Success Skip Flag")
+                    else:
+                        print("Failed Skip Flag")
+
+                    # 配置エリアA,Bで画像をuploadしている場合、終了する.
+                    # NOTE: successful_send_best_shotも条件に入れることで
+                    #       upload失敗時、候補画像のuploadを試みる
+                    if self.successful_send_best_shot and\
+                            self.successful_send_fig_B:
+                        break
+                    continue
+
+                # ベストショット確定でない場合
+                else:
+                    # ベストショットがなく、優先画像がナイスショット以上の場合、
+                    # 優先画像を優先する
+                    if img_name == self.priority_candidate_img and \
+                            score >= 3:
+                        score = 5
+
+                    if score > max_score:
+                        # 候補画像の更新
+                        self.candidate_img = img_name
+                        self.candidate_img_path = img_path
+                        max_score = score
+
+            # ベストショット確定と判断できる画像がなかった場合
+            if self.successful_send_best_shot is False:
+                # 候補画像のアップロード
+                if OfficialInterface.upload_snap(self.candidate_img_path):
+                    self.successful_send_candidate = True
+
+        finally:
+            """タイムアップやエラーなどで終了した際の送信試み."""
+            if (self.best_shot_img_path is not None) and \
+                    (self.successful_send_best_shot is False):
+                if OfficialInterface.upload_snap(self.best_shot_img_path):
+                    self.successful_send_best_shot = True
+
+            if (self.candidate_img_path is not None) and \
+                (self.successful_send_candidate is False) and \
+                    (self.successful_send_best_shot is False):
+                if OfficialInterface.upload_snap(self.candidate_img_path):
+                    self.successful_send_candidate = True
+
+            if (self.fig_B_img_path is not None) and \
+                    (self.successful_send_fig_B is False):
+                if OfficialInterface.upload_snap(self.fig_B_img_path):
+                    self.successful_send_fig_B = True
+
+            # 結果表示
+            self.show_result()
 
 
 if __name__ == "__main__":
     """作業用."""
     snap = RoboSnap()
     snap.start_snap()
-    print("終了")

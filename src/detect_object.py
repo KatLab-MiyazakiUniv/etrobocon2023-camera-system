@@ -40,7 +40,8 @@ class DetectObject():
     __IMG_SIZE = (640, 480)
 
     def __init__(self,
-                 weights=YOLO_PATH/'learned_fig_weight.pt',
+                 weights=YOLO_PATH/'learned_fig_weight_ver2.pt',
+                 #  weights=YOLO_PATH/'learned_fig_weight.pt',
                  label_data=YOLO_PATH/'fig_label.yaml',
                  conf_thres=0.6,
                  iou_thres=0.45,
@@ -216,7 +217,7 @@ if __name__ == '__main__':
                         default=1, help='バウンディングボックスの太さ')
     parser.add_argument("--stride", type=int, default=32, help='ストライド')
     parser.add_argument("-img", "--img_path", type=str,
-                        default=IMAGE_DIR_PATH/'test_image.png', help='入力画像')
+                        default=IMAGE_DIR_PATH/'FigA_1.png', help='入力画像')
     parser.add_argument("-spath", "--save_path", type=str,
                         default=save_path, help='検出画像の保存先. Noneの場合保存しない')
     args = parser.parse_args()

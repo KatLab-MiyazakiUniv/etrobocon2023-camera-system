@@ -17,17 +17,20 @@ class TestRoboSnap:
     def setup_method(self):
         """前処理."""
         raspike_ip = "192.168.11.16"
+
         self.snap = RoboSnap(raspike_ip)
-        self.snap.img_dir_path = "tests/testdata/img"
 
         # 順番大事
         self.snap.img_list = [
-            "black_image.png",
+            "black.png",
             "FigA_1.png",
             "FigA_2.png",
             "FigB.png",
             "FigA_3.png",
             "FigA_4.png"]
+
+        self.snap.bash_path = "tests/testdata/test_copy_fig.sh"
+        self.snap.img_dir_path = "tests/testdata/img"
 
     def teardown_method(self):
         """後処理."""
@@ -39,17 +42,14 @@ class TestRoboSnap:
             delete_img(path1)
             delete_img(path2)
 
-    @mock.patch("src.robo_snap.RoboSnap.scp_fig_image")
     @mock.patch("src.robo_snap.DetectObject.detect_object")
     @mock.patch("src.robo_snap.OfficialInterface.upload_snap")
     def test_start_snap(self,
                         mock_upload_snap,
-                        mock_detect_object,
-                        mock_scp_fig_image):
+                        mock_detect_object):
         """ロボコンスナップ攻略クラスのテスト."""
-        mock_scp_fig_image.return_value = None
         mock_detect_object.return_value = []
-        mock_upload_snap.return_value = None
+        mock_upload_snap.return_value = False
         assert self.snap.start_snap() is None
 
         # 画像が生成されているかのチェック

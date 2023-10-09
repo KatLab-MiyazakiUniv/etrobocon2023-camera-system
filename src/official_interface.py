@@ -92,6 +92,7 @@ class OfficialInterface:
             success = False
         return success
 
+
 if __name__ == "__main__":
     print("test-start")
     OfficialInterface.set_train_pwm(10)
