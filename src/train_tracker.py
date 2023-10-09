@@ -13,45 +13,77 @@ from official_interface import OfficialInterface
 class TrainTracker:
     """列車を捕捉するクラス."""
 
-    def __init__(self, camera_id: int) -> None:
-        """コンストラクタ.
-
-        Args:
-            camera_id (int): カメラID
-        """
-        self.camera = CameraInterface(camera_id)
+    def __init__(self) -> None:
+        """コンストラクタ."""
         self.diff_border = 20       # 動体検知におけるフレームの差の閾値
+        self.camera = None
         self.observe_rect_points = [(0, 0), (0, 0)]
 
     def calibrate(self) -> None:
         """キャリブレーション."""
-        # 録画を開始する
-        video, mark_video = self.camera.start_record()
-        # クリックに対するコールバックを設定
-        cv2.namedWindow("Calibration")
-        cv2.setMouseCallback("Calibration", self.mouse_callback)
-
+        WINDOW_NAME = "Calibration"
+        self.camera = None
+        self.observe_rect_points = [(0, 0), (0, 0)]
         while True:
-            # フレームを取得
-            success, frame = self.camera.get_frame()
-            if not success:
+            # キャリブレーション用のウィンドウを生成
+            cv2.namedWindow(WINDOW_NAME)
+            # クリックに対するコールバックを設定
+            cv2.setMouseCallback(WINDOW_NAME, self.mouse_callback)
+
+            # 入力された数字をカメラIDとして扱う
+            print("Press key for the camera ID with focus on the Calibration window.")
+            key = cv2.waitKey(0)
+            # 数字が入力されるまで入力を要求する
+            while not chr(key).isdecimal():
+                key = cv2.waitKey(0)
+            camera_id = int(chr(key))
+            # 入力されたカメラIDでCameraInterfaceのインスタンス化を試す
+            try:
+                camera = CameraInterface(camera_id)
+                success, _ = camera.get_frame()
+                if not success:
+                    raise Exception(f"Error: Unable to access a camera with camera ID {camera_id}.")
+            # CameraInterfaceのインスタンス化に失敗した場合、再度カメラIDの入力にもどる
+            except Exception as error:
+                print(error)
+                continue
+
+            # 録画を開始する
+            video, mark_video = camera.start_record()
+            # クリックされた領域を監視対象とする。"q"キーで決定, "r"キーでカメラID再入力
+            print("Click the upper left and lower right of the area to observe and press the 'q' key.")
+            print("If switching camera, press the 'r' key.")
+            while True:
+                # フレームを取得
+                success, frame = camera.get_frame()
+                if not success:
+                    break
+
+                # クリックされた領域の描画
+                mark_frame = self.draw_observe_rect(frame)
+
+                # フレームの表示
+                cv2.imshow(WINDOW_NAME, mark_frame)
+                # フレームのファイル出力
+                video.write(frame)              # 撮影した動画
+                mark_video.write(mark_frame)    # 輪郭線を描画した動画
+
+                # キー受付(1ms間待機)
+                key = cv2.waitKey(1)
+                # "q"キーを押すと監視範囲&カメラを決定し操作を終了する
+                if key == ord("q"):
+                    self.camera = camera
+                    break
+                # "r"キーを押すと再度カメラIDの入力に戻る
+                elif key == ord("r"):
+                    break
+            # 録画を終了する
+            camera.end_record()
+
+            # カメラが決定されている場合、キャリブレーション完了とする
+            if self.camera is not None:
+                print("\nComplete camera calibration.\n")
                 break
-
-            # クリックされた領域の描画
-            mark_frame = self.draw_observe_rect(frame)
-
-            # フレームの表示
-            cv2.imshow("Calibration", mark_frame)
-            # フレームのファイル出力
-            video.write(frame)              # 撮影した動画
-            mark_video.write(mark_frame)    # 輪郭線を描画した動画
-
-            # "q"キーを押すとループを抜けて終了
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-
-        # リソースを解放
-        self.camera.end_record()
 
     def mouse_callback(self, event, x, y, *_) -> None:
         """キャリブレーションのクリック時の処理.
@@ -81,46 +113,42 @@ class TrainTracker:
 
     def observe(self) -> None:
         """映像を監視する."""
+        WINDOW_NAME = "Observe"
+        # キャリブレーション用のウィンドウを生成
+        cv2.namedWindow(WINDOW_NAME)
+
         # 録画を開始する
         video, mark_video = self.camera.start_record()
 
-        initial_frame = None
-        # フレームを取得して動画に書き込む
+        # 初期フレームを記録する
+        _, frame = self.camera.get_frame()
+        initial_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype("float")
+
+        # 動体を監視する
         while True:
             # フレームを取得
             success, frame = self.camera.get_frame()
             if not success:
                 break
 
-            # 初期フレームを保持
-            if initial_frame is None:
-                gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                initial_frame = gray_frame.copy().astype("float")
-                # 以降の処理をスキップし次のループへ
-                continue
-
             # 列車の検出
-            mark_frame, train_rect_points = self.detect_train(
-                frame, initial_frame)
+            mark_frame, train_rect_points = self.detect_train(frame, initial_frame)
             # クリックされた領域の描画
             mark_frame = self.draw_observe_rect(mark_frame)
 
             if len(train_rect_points) >= 2:
-                # 列車の境界 (左,上),(右,下) (上は使用しない)
-                (train_left, _), (train_right,
-                                  train_bottom) = train_rect_points
+                # 列車の境界 (左,上(使用しない)),(右,下) 
+                (train_left, _), (train_right, train_bottom) = train_rect_points
                 # 描画した指定領域
-                observe_y_values = [
-                    y for _, y in self.observe_rect_points]
-                observe_x_values = [
-                    x for x, _ in self.observe_rect_points]
+                observe_y_values = [y for _, y in self.observe_rect_points]
+                observe_x_values = [x for x, _ in self.observe_rect_points]
 
                 observe_top = min(observe_y_values)
                 observe_bottom = max(observe_y_values)
                 observe_left = min(observe_x_values)
                 observe_right = max(observe_x_values)
 
-                # 列車が指定領域に侵入しているかを判定する.
+                # 列車が指定領域に侵入しているかを判定する
                 # 列車の先頭(下方向)のy座標が指定領域内
                 if observe_top < train_bottom < observe_bottom:
                     # 列車のx座標が指定領域内
@@ -135,12 +163,15 @@ class TrainTracker:
                         break
 
             # フレームの表示
-            cv2.imshow("Frame", mark_frame)
+            cv2.imshow(WINDOW_NAME, mark_frame)
             # フレームのファイル出力
             video.write(frame)              # 撮影した動画
             mark_video.write(mark_frame)    # 輪郭線を描画した動画
 
-        # リソースを解放
+            # 表示のためのウィンドウの1msスリープ
+            cv2.waitKey(1)
+
+        # 録画を終了する
         self.camera.end_record()
 
     def detect_train(self, frame, initial_frame) -> (
