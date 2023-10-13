@@ -117,7 +117,7 @@ class TrainTracker:
     def observe(self) -> None:
         """映像を監視する."""
         WINDOW_NAME = "Observe"
-        # キャリブレーション用のウィンドウを生成
+        # IoT列車攻略の確認用のウィンドウを生成
         cv2.namedWindow(WINDOW_NAME)
 
         # 録画を開始する
