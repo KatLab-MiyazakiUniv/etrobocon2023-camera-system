@@ -60,7 +60,6 @@ class CameraSystem:
         # sever_ipは、Bluetooth接続なら172.20.1.1
         # Wi-Fi接続なら、走行体１は192.168.11.16、走行体２は192.168.11.17
         client = Client(self.raspike_ip)
-        pre_state = ""
 
         # Webカメラのキャリブレーション
         tt = TrainTracker()
@@ -69,20 +68,18 @@ class CameraSystem:
         while True:
             state = client.get_robot_state()
             # 走行体の状態が"finish"になった時、終了する。
-            if state == "finish":
-                print(state)
-                break
-            elif state == "lap" and state != pre_state:
+            if state == "lap":
                 # IoT列車の監視を開始
                 tt.observe()
 
                 # ロボコンスナップ攻略開始
                 snap = RoboSnap(self.raspike_ip)
                 snap.start_snap()
+
+                # 処理を終了
+                break
             else:
                 print(state)
 
-            # 状態の保持
-            pre_state = state
             # 2秒待つ
             time.sleep(2)

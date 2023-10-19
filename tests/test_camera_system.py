@@ -25,7 +25,7 @@ class TestCameraSystem:
 
         # モック化したクラスや関数などの返り値を設定
         mock_upload_snap.return_value = None
-        mock_get_robot_state.return_value = "finish"
+        mock_get_robot_state.return_value = "lap"
         mock_calibrate.return_value = None
         mock_observe.return_value = None
         mock_mkdir_fig_img.return_value = None
