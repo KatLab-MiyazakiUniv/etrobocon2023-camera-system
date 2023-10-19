@@ -66,8 +66,8 @@ class CameraSystem:
         tt.calibrate()
 
         while True:
+            # 走行状況を取得
             state = client.get_robot_state()
-            # 走行体の状態が"finish"になった時、終了する。
             if state == "lap":
                 # IoT列車の監視を開始
                 tt.observe()
@@ -76,7 +76,7 @@ class CameraSystem:
                 snap = RoboSnap(self.raspike_ip)
                 snap.start_snap()
 
-                # 処理を終了
+                # カメラシステムを終了
                 break
             else:
                 print(state)
