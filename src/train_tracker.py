@@ -127,6 +127,9 @@ class TrainTracker:
         _, frame = self.camera.get_frame()
         initial_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype("float")
 
+        # IoT列車の初期速度を設定する
+        OfficialInterface.set_train_pwm(30)
+
         # 動体を監視する
         while True:
             # フレームを取得
