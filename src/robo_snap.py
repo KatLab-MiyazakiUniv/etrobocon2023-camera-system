@@ -1,10 +1,11 @@
 """ロボコンスナップを攻略するモジュール.
 
-@author: kawanoichi
+@author: kawanoichi aridome222
 """
 import os
 import time
 import numpy as np
+from enum import Enum
 
 from detect_object import DetectObject
 from official_interface import OfficialInterface
@@ -177,17 +178,48 @@ class RoboSnap:
 
         try:
             max_score = -1  # score初期値
-            for _ in range(len(self.img_list)):
+            start_time = 0.0  # 次の画像の受信開始前のタイムスタンプ
+            # 次のスナップまでの各区間におけるタイムアウト時間リスト
+            timeouts = [
+                Timeouts.TIMEOUT_FROM_FigA_1_TO_FigA_2,  # i = 1 の時、timeouts[0]
+                Timeouts.TIMEOUT_FROM_FigA_2_TO_FigB,   # i = 2 の時、timeouts[1]
+                Timeouts.TIMEOUT_FROM_FigB_TO_FigA_3,   # i = 3 の時、timeouts[2]
+                Timeouts.TIMEOUT_FROM_FigA_3_TO_FigA_4  # i = 4 の時、timeouts[3]
+            ]
+            timeout_flag = False  # タイムアウトしたかどうかを判定するフラグ
+
+            for i in range(len(self.img_list)):
 
                 # 走行体から画像を取得
                 while True:  # 画像が見つかるまでループ
                     # 画像の受信試み
                     img_name, img_path = self.scp_fig_image()
 
+                    # 画像を受信したらループを抜ける
                     if img_name is not None:
+                        # FigA_4でなければ、計測を開始する.
+                        if img_name != "FigA_4.png":
+                            start_time = time.time()
                         break
 
+                    # 画像を受信しておらず、計測が開始されている時の処理
+                    elif start_time != 0.0:
+                        # タイムアウト時間を超過していないか監視
+                        try:
+                            # 現在までの計測時間がタイムアウト時間を超過した場合、例外処理に入る
+                            if time.time() - start_time > timeouts[i-1]:
+                                # タイムアウトフラグを立てる
+                                timeout_flag = True
+                                raise TimeoutError("timeout receive image")
+                        except TimeoutError as e:
+                            print(f"Error: {e}")
+                            break
+
                     time.sleep(2)
+
+                # タイムアウト時間を超過している場合、ループを抜けて現時点でのベスト画像を送信する
+                if timeout_flag:
+                    break
 
                 # 配置エリアBの画像を取得した時の処理
                 if img_name == self.fig_img_B:
@@ -281,6 +313,20 @@ class RoboSnap:
 
             # 結果表示
             self.show_result()
+
+
+class Timeouts(Enum):
+    """ロボコンスナップの各区間におけるタイムアウト時間を保持するクラス.
+
+    NOTE:
+        次の画像を受信するまでの応答時間が下記の規定時間を超過した場合に、 \
+        走行体がコースアウトしたとみなすための各区間におけるタイムアウト時間.
+    """
+
+    TIMEOUT_FROM_FigA_1_TO_FigA_2 = 10.0  # FigA_1 ~ FigA_2の区間のタイムアウト時間（秒）
+    TIMEOUT_FROM_FigA_2_TO_FigB = 10.0  # FigA_2 ~ FigBの区間のタイムアウト時間（秒）
+    TIMEOUT_FROM_FigB_TO_FigA_3 = 10.0  # FigB ~ FigA_3の区間のタイムアウト時間（秒）
+    TIMEOUT_FROM_FigA_3_TO_FigA_4 = 10.0  # FigA_3 ~ FigA_4の区間のタイムアウト時間（秒）
 
 
 if __name__ == "__main__":
