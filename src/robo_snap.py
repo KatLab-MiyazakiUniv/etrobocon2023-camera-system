@@ -179,13 +179,7 @@ class RoboSnap:
         try:
             max_score = -1  # score初期値
             start_time = 0.0  # 次の画像の受信開始前のタイムスタンプ
-            # 次のスナップまでの各区間におけるタイムアウト時間リスト
-            timeouts = [
-                Timeouts.TIMEOUT_FROM_FigA_1_TO_FigA_2,  # i = 1 の時、timeouts[0]
-                Timeouts.TIMEOUT_FROM_FigA_2_TO_FigB,   # i = 2 の時、timeouts[1]
-                Timeouts.TIMEOUT_FROM_FigB_TO_FigA_3,   # i = 3 の時、timeouts[2]
-                Timeouts.TIMEOUT_FROM_FigA_3_TO_FigA_4  # i = 4 の時、timeouts[3]
-            ]
+            time_limit = 10  # 次の画像を受信するまでの制限時間
             timeout_flag = False  # タイムアウトしたかどうかを判定するフラグ
 
             for i in range(len(self.img_list)):
@@ -202,24 +196,15 @@ class RoboSnap:
                             start_time = time.time()
                         break
 
-                    # 画像を受信しておらず、計測が開始されている時の処理
-                    elif start_time != 0.0:
-                        # タイムアウト時間を超過していないか監視
-                        try:
-                            # 現在までの計測時間がタイムアウト時間を超過した場合、例外処理に入る
-                            if time.time() - start_time > timeouts[i-1]:
-                                # タイムアウトフラグを立てる
-                                timeout_flag = True
-                                raise TimeoutError("timeout receive image")
-                        except TimeoutError as e:
-                            print(f"Error: {e}")
+                    # 1回目の撮影前のコースアウトは考慮しない
+                    elif i != 0:
+                        # 現在までの計測時間が制限時間を超過した場合、コースアウトしたとみなす
+                        if time.time() - start_time > time_limit:
+                            # タイムアウトフラグを立てる
+                            timeout_flag = True
                             break
 
                     time.sleep(2)
-
-                # タイムアウト時間を超過している場合、ループを抜けて現時点でのベスト画像を送信する
-                if timeout_flag:
-                    break
 
                 # 配置エリアBの画像を取得した時の処理
                 if img_name == self.fig_img_B:
@@ -230,6 +215,17 @@ class RoboSnap:
                     # 配置エリアAで画像をuploadしている場合、終了する.
                     if self.successful_send_best_shot:
                         break
+                    continue
+
+                # コースアウトしているならば、候補写真を送信し、次の画像を探し続ける
+                if timeout_flag:
+                    if (self.successful_send_best_shot is False):
+                        if OfficialInterface.upload_snap(
+                                self.candidate_img_path):
+                            # 候補写真をベストショットとみなして、ベストショットフラグを立てる
+                            # self.successful_send_candidate = Trueにすると、
+                            # if timeout_flag:を満たし続けて、再び写真を送信してしまう
+                            self.successful_send_best_shot = True
                     continue
 
                 # 物体検出
@@ -293,8 +289,8 @@ class RoboSnap:
                 if OfficialInterface.upload_snap(self.candidate_img_path):
                     self.successful_send_candidate = True
 
-        finally:
-            """タイムアップやエラーなどで終了した際の送信試み."""
+        except Exception:
+            """タイムアップやエラー、コースアウトなどで終了した際の送信試み."""
             if (self.best_shot_img_path is not None) and \
                     (self.successful_send_best_shot is False):
                 if OfficialInterface.upload_snap(self.best_shot_img_path):
@@ -313,20 +309,6 @@ class RoboSnap:
 
             # 結果表示
             self.show_result()
-
-
-class Timeouts(Enum):
-    """ロボコンスナップの各区間におけるタイムアウト時間を保持するクラス.
-
-    NOTE:
-        次の画像を受信するまでの応答時間が下記の規定時間を超過した場合に、 \
-        走行体がコースアウトしたとみなすための各区間におけるタイムアウト時間.
-    """
-
-    TIMEOUT_FROM_FigA_1_TO_FigA_2 = 10.0  # FigA_1 ~ FigA_2の区間のタイムアウト時間（秒）
-    TIMEOUT_FROM_FigA_2_TO_FigB = 10.0  # FigA_2 ~ FigBの区間のタイムアウト時間（秒）
-    TIMEOUT_FROM_FigB_TO_FigA_3 = 10.0  # FigB ~ FigA_3の区間のタイムアウト時間（秒）
-    TIMEOUT_FROM_FigA_3_TO_FigA_4 = 10.0  # FigA_3 ~ FigA_4の区間のタイムアウト時間（秒）
 
 
 if __name__ == "__main__":
