@@ -211,25 +211,26 @@ class RoboSnap:
                     # 配置エリアBの画像は検出せずにアップロード
                     if OfficialInterface.upload_snap(self.fig_B_img_path):
                         self.successful_send_fig_B = True
-                        if self.successful_send_best_shot or self.successful_send_candidate:
+                        if self.successful_send_best_shot or \
+                                self.successful_send_candidate:
                             break
                     continue
 
                 # コースアウト判定でFigAを送信したのに、新たなFigAを取得してしまった場合
-                elif self.successful_send_best_shot or self.successful_send_candidate:
+                elif self.successful_send_best_shot or \
+                        self.successful_send_candidate:
                     continue
 
                 # コースアウトしているならば、候補写真を送信し、次の画像を探し続ける
                 if timeout_flag:
                     if self.candidate_img_path is not None:
-                        if OfficialInterface.upload_snap(self.candidate_img_path):
+                        if OfficialInterface.upload_snap(
+                                self.candidate_img_path):
                             self.successful_send_candidate = True
                             if self.successful_send_fig_B:
                                 break
                     timeout_flag = False
                     continue
-
-                
 
                 # 物体検出
                 detected_img_path = os.path.join(
