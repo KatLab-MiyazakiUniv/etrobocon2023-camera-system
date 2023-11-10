@@ -181,7 +181,6 @@ class RoboSnap:
             timeout_flag = False  # タイムアウトしたかどうかを判定するフラグ
             i = 0
             while True:
-                start_time = 0.0  # 次の画像の受信開始前のタイムスタンプ
                 i += 1
                 # 走行体から画像を取得
                 while True:  # 画像が見つかるまでループ
