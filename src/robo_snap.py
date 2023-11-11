@@ -1,6 +1,6 @@
 """ロボコンスナップを攻略するモジュール.
 
-@author: kawanoichi
+@author: kawanoichi aridome222
 """
 import os
 import time
@@ -177,15 +177,30 @@ class RoboSnap:
 
         try:
             max_score = -1  # score初期値
-            for _ in range(len(self.img_list)):
-
+            time_limit = 10  # 次の画像を受信するまでの制限時間
+            timeout_flag = False  # タイムアウトしたかどうかを判定するフラグ
+            i = 0
+            while True:
+                i += 1
                 # 走行体から画像を取得
                 while True:  # 画像が見つかるまでループ
                     # 画像の受信試み
                     img_name, img_path = self.scp_fig_image()
 
+                    # 画像を受信したらループを抜ける
                     if img_name is not None:
+                        # FigA_4でなければ、計測を開始する.
+                        if img_name != "FigA_4.png":
+                            start_time = time.time()
                         break
+
+                    # 1回目の撮影前のコースアウトは考慮しない
+                    elif i != 1:
+                        # 現在までの計測時間が制限時間を超過した場合、コースアウトしたとみなす
+                        if time.time() - start_time > time_limit:
+                            # タイムアウトフラグを立てる
+                            timeout_flag = True
+                            break
 
                     time.sleep(2)
 
@@ -195,9 +210,25 @@ class RoboSnap:
                     # 配置エリアBの画像は検出せずにアップロード
                     if OfficialInterface.upload_snap(self.fig_B_img_path):
                         self.successful_send_fig_B = True
-                    # 配置エリアAで画像をuploadしている場合、終了する.
-                    if self.successful_send_best_shot:
-                        break
+                        if self.successful_send_best_shot or \
+                                self.successful_send_candidate:
+                            break
+                    continue
+
+                # コースアウト判定でFigAを送信したのに、新たなFigAを取得してしまった場合
+                elif self.successful_send_best_shot or \
+                        self.successful_send_candidate:
+                    continue
+
+                # コースアウトしているならば、候補写真を送信し、次の画像を探し続ける
+                if timeout_flag:
+                    if self.candidate_img_path is not None:
+                        if OfficialInterface.upload_snap(
+                                self.candidate_img_path):
+                            self.successful_send_candidate = True
+                            if self.successful_send_fig_B:
+                                break
+                    timeout_flag = False
                     continue
 
                 # 物体検出
@@ -261,8 +292,8 @@ class RoboSnap:
                 if OfficialInterface.upload_snap(self.candidate_img_path):
                     self.successful_send_candidate = True
 
-        finally:
-            """タイムアップやエラーなどで終了した際の送信試み."""
+        except Exception:
+            """エラー発生時の送信試み."""
             if (self.best_shot_img_path is not None) and \
                     (self.successful_send_best_shot is False):
                 if OfficialInterface.upload_snap(self.best_shot_img_path):

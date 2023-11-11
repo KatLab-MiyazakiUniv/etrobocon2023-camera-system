@@ -49,9 +49,8 @@ class TestRoboSnap:
                         mock_detect_object):
         """ロボコンスナップ攻略クラスのテスト."""
         mock_detect_object.return_value = []
-        mock_upload_snap.return_value = False
+        mock_upload_snap.return_value = True
         assert self.snap.start_snap() is None
-
         # 画像が生成されているかのチェック
         for img in self.snap.img_list:
             check_img_path = os.path.join(
