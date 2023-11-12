@@ -180,7 +180,7 @@ class RoboSnap:
             time_limit = 10  # 次の画像を受信するまでの制限時間
             timeout_flag = False  # タイムアウトしたかどうかを判定するフラグ
             i = 0
-            while True:
+            while len(self.img_list) != 0:
                 i += 1
                 # 走行体から画像を取得
                 while True:  # 画像が見つかるまでループ
