@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "etrobocon2023-camera-system"
+name = "etrobocon2024-camera-system"
 version = "0.1.0"
-description = "宮崎大学片山徹郎研究室チームKatLabが作成するETロボコン2022アドバンストクラスのカメラシステム用のプログラムです."
+description = "宮崎大学片山徹郎研究室チームKatLabが作成するETロボコン2024アドバンストクラスのカメラシステム用のプログラムです."
 authors = ["KatLab-MiyazakiUniv"]
 readme = "README.md"
 
@@ -11,7 +11,9 @@ autopep8 = "^2.0.2"
 pycodestyle = "^2.10.0"
 pydocstyle = "^6.3.0"
 coverage = "^7.2.7"
-
+datetime = "^5.2"
+opencv-python = "^4.8.0.74"
+requests = "^2.31.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
